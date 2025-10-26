@@ -20,4 +20,5 @@ Resources:
           GIN_MODE: debug
           AWS_REGION: eu-central-1
           LOG_LEVEL: debug
-          OPENAI_API_KEY_SECRET_NAME: openai-api-key-service-test
+          MODEL_ID: "gemini-2.5-flash"
+          GEMINI_API_KEY:

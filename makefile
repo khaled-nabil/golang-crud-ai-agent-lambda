@@ -1,11 +1,19 @@
 # Makefile
 
-.PHONY: build clean deploy invoke-health
+.PHONY: build clean deploy invoke-health lint deps
 
 # Define your AWS SAM parameters
 STACK_NAME = your-stack-name
 REGION = your-region
 TEMPLATE = template.yaml
+
+# Install dependencies
+deps:
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+# Run linter
+lint:
+	golangci-lint run ./...
 
 # Build the serverless application
 build:
