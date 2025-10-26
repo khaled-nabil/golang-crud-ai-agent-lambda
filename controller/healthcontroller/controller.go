@@ -1,4 +1,4 @@
-package health
+package healthcontroller
 
 import (
 	"log"
