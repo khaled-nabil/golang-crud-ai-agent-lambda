@@ -18,7 +18,7 @@ func New(
 	return &Router{gin, ctrl}
 }
 
-func (r *Router) Setup() {
-	r.Gin.Group("/api/v1/").
-		GET("health", r.ctrl.Health)
+func (r *Router) Route() {
+	r.Gin.Group("/api/v1").
+		GET("/health", r.ctrl.Health)
 }
