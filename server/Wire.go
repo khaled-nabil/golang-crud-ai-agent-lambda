@@ -4,26 +4,35 @@
 package server
 
 import (
-	"ai-agent/controller/health"
+	"ai-agent/controller/agentcontroller"
+	"ai-agent/controller/healthcontroller"
+	"ai-agent/model/geminimodel"
+	"ai-agent/pkg/geminipkg"
 	"ai-agent/router"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 )
 
 func NewGinEngine() *gin.Engine {
+	gin.SetMode(os.Getenv("GIN_MODE"))
+
 	return gin.New()
 }
 
 var ProviderSet = wire.NewSet(
 	NewGinEngine,
-	health.New,
+	New,
+	healthcontroller.New,
+	wire.Bind(new(geminimodel.Gemini), new(*geminipkg.Gemini)),
+	agentcontroller.New,
 	router.New,
-	server.New,
+	geminipkg.New,
 )
 
-func InitializeServer() *server.Server {
-	panic(wire.Build(ProviderSet))
+func InitializeServer() (*Server, error) {
+	wire.Build(ProviderSet)
 
-	return nil
+	return nil, nil
 }
