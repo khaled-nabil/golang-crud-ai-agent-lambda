@@ -13,7 +13,10 @@ func main() {
 	lambda.Start(func(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 		log.Print("Starting Server")
 
-		s := server.InitializeServer()
+		s, err := server.InitializeServer()
+		if err != nil {
+			log.Fatalf("Failed to initialize server: %v", err)
+		}
 
 		return s.Handle(ctx, &req)
 	})

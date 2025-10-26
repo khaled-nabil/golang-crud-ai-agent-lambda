@@ -1,24 +1,29 @@
 package router
 
 import (
-	"ai-agent/controller/health"
+	"ai-agent/controller/agentcontroller"
+	"ai-agent/controller/healthcontroller"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Router struct {
-	Gin  *gin.Engine
-	ctrl *health.Controller
+	Gin   *gin.Engine
+	hctrl *healthcontroller.Controller
+	actrl *agentcontroller.Controller
 }
 
 func New(
 	gin *gin.Engine,
-	ctrl *health.Controller,
+	hctrl *healthcontroller.Controller,
+	actrl *agentcontroller.Controller,
 ) *Router {
-	return &Router{gin, ctrl}
+	return &Router{gin, hctrl, actrl}
 }
 
 func (r *Router) Route() {
 	r.Gin.Group("/api/v1").
-		GET("/health", r.ctrl.Health)
+		GET("/health", r.hctrl.Health).
+		POST(fmt.Sprintf("/send/:%s", agentcontroller.UserIDKey), r.actrl.SendMessage)
 }
