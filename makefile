@@ -30,4 +30,8 @@ deploy:
 # Invoke the Lambda function locally with the health check event
 invoke-health:
 	sam build
-	sam local invoke -e .invokation/health.json
+	sam local invoke -e .invokation/health.json --env-vars env.json
+
+invoke-ai:
+	sam build
+	sam local invoke -e .invokation/ai.json --env-vars env.json

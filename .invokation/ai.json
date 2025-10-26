@@ -1,0 +1,5 @@
+{
+  "httpMethod": "POST",
+  "path": "/api/v1/send/123",
+  "body": "{\"message\": \"Hello, how are you?\"}"
+}
