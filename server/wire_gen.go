@@ -7,8 +7,9 @@
 package server
 
 import (
-	"ai-agent/controller"
+	"ai-agent/controller/health"
 	"ai-agent/router"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 )
@@ -17,7 +18,7 @@ import (
 
 func InitializeServer() *Server {
 	engine := NewGinEngine()
-	controllerController := controller.New()
+	controllerController := health.New()
 	routerRouter := router.New(engine, controllerController)
 	serverServer := New(engine, routerRouter)
 	return serverServer
@@ -30,5 +31,5 @@ func NewGinEngine() *gin.Engine {
 }
 
 var ProviderSet = wire.NewSet(
-	NewGinEngine, controller.New, router.New, New,
+	NewGinEngine, health.New, router.New, New,
 )

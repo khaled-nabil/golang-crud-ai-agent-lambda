@@ -3,11 +3,11 @@ package server
 import (
 	"context"
 
-	"ai-agent/router"
-
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/awslabs/aws-lambda-go-api-proxy/gin"
+	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
 	"github.com/gin-gonic/gin"
+
+	"ai-agent/router"
 )
 
 type Server struct {

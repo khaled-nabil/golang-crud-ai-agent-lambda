@@ -1,19 +1,19 @@
 package router
 
 import (
-	"ai-agent/controller"
+	"ai-agent/controller/health"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Router struct {
 	Gin  *gin.Engine
-	ctrl *controller.Controller
+	ctrl *health.Controller
 }
 
 func New(
 	gin *gin.Engine,
-	ctrl *controller.Controller,
+	ctrl *health.Controller,
 ) *Router {
 	return &Router{gin, ctrl}
 }
