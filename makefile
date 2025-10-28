@@ -35,3 +35,9 @@ invoke-health:
 invoke-ai:
 	sam build
 	sam local invoke -e .invokation/ai.json --env-vars env.json
+
+plan:
+	cd .tf && terraform plan -out=tfplan.plan
+
+apply:
+	cd .tf && terraform apply tfplan.plan
