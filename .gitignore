@@ -39,3 +39,10 @@ env.json
 # Temporary files
 *.tmp
 *.temp
+
+# Terraform files
+/.tf/.build/*
+.terraform
+tfplan.plan
+*.tfstate*
+.terraform.lock.hcl
