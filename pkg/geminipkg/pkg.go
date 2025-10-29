@@ -1,7 +1,7 @@
 package geminipkg
 
 import (
-	"ai-agent/model/geminimodel"
+	"ai-agent/model/datamodels"
 	"ai-agent/pkg/secretspkg"
 	"context"
 	"fmt"
@@ -74,7 +74,7 @@ func (g *Gemini) createChat(history []*genai.Content) error {
 	return nil
 }
 
-func (g *Gemini) Chat(userInput string, h []geminimodel.HistoryContext) (string, []geminimodel.HistoryContext, error) {
+func (g *Gemini) Chat(userInput string, h []datamodels.HistoryContext) (string, []datamodels.HistoryContext, error) {
 	if g.session == nil {
 		if err := g.createChat(nil); err != nil {
 			return "", nil, err
@@ -107,12 +107,12 @@ func (g *Gemini) Chat(userInput string, h []geminimodel.HistoryContext) (string,
 	return tr, h, nil
 }
 
-func extractHistory(ui *string, r *string, h []geminimodel.HistoryContext) ([]geminimodel.HistoryContext, error) {
+func extractHistory(ui *string, r *string, h []datamodels.HistoryContext) ([]datamodels.HistoryContext, error) {
 	if ui == nil || r == nil {
 		return nil, fmt.Errorf("user input or response is empty")
 	}
 
-	h = append(h, geminimodel.HistoryContext{
+	h = append(h, datamodels.HistoryContext{
 		UserInput: ui,
 		Response:  r,
 	})

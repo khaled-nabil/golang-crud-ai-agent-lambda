@@ -25,5 +25,5 @@ func New(
 func (r *Router) Route() {
 	r.Gin.Group("/api/v1").
 		GET("/health", r.hctrl.Health).
-		POST(fmt.Sprintf("/send/:%s", agentcontroller.UserIDKey), r.actrl.SendMessage)
+		POST(fmt.Sprintf("/send"), r.actrl.SendMessage)
 }
