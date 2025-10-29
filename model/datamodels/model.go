@@ -2,7 +2,7 @@ package datamodels
 
 type (
 	Gemini interface {
-		Chat(userInput string, h []HistoryContext) (string, []HistoryContext, error)
+		Chat(userInput string, h []HistoryContext) (*HistoryContext, error)
 	}
 
 	DynamoDB interface {
@@ -10,7 +10,7 @@ type (
 	}
 
 	HistoryContext struct {
-		UserInput *string `json:"user_input"`
-		Response  *string `json:"response"`
+		UserInput string `json:"user"`
+		Response  string `json:"response"`
 	}
 )

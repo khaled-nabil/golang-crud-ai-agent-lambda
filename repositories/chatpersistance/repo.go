@@ -11,10 +11,9 @@ type (
 	}
 
 	ChatMessage struct {
-		UserID    string `json:"user_id" dynamodbav:"user_id"`
-		Timestamp string `json:"timestamp" dynamodbav:"timestamp"`
-		Message   string `json:"message" dynamodbav:"message"`
-		Role      string `json:"role" dynamodbav:"role"`
+		UserID       string                     `json:"user_id" dynamodbav:"user_id"`
+		Timestamp    int64                      `json:"timestamp" dynamodbav:"timestamp"`
+		Conversation *datamodels.HistoryContext `json:"conversation" dynamodbav:"conversation"`
 	}
 )
 
@@ -22,12 +21,11 @@ func New(pkg datamodels.DynamoDB) *Repo {
 	return &Repo{pkg}
 }
 
-func (r *Repo) StoreChatMessage(userID, message, role string) error {
+func (r *Repo) StoreConversation(id string, h *datamodels.HistoryContext) error {
 	chatMessage := ChatMessage{
-		UserID:    userID,
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
-		Message:   message,
-		Role:      role,
+		UserID:       id,
+		Timestamp:    time.Now().UTC().Unix(),
+		Conversation: h,
 	}
 
 	err := r.pkg.StoreItem(chatMessage)

@@ -11,11 +11,11 @@ resource "aws_dynamodb_table" "chat_history" {
 
   attribute {
     name = "timestamp"
-    type = "S"
+    type = "N"
   }
 
   tags = {
-    Group        = var.function_name
+    Group       = var.function_name
     Environment = var.environment
   }
 }
