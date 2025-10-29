@@ -8,6 +8,7 @@ import (
 	"ai-agent/controller/healthcontroller"
 	"ai-agent/model/geminimodel"
 	"ai-agent/pkg/geminipkg"
+	"ai-agent/pkg/secretspkg"
 	"ai-agent/router"
 	"os"
 
@@ -29,6 +30,7 @@ var ProviderSet = wire.NewSet(
 	agentcontroller.New,
 	router.New,
 	geminipkg.New,
+	secretspkg.New,
 )
 
 func InitializeServer() (*Server, error) {

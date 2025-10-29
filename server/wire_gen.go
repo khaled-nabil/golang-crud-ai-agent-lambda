@@ -11,6 +11,7 @@ import (
 	"ai-agent/controller/healthcontroller"
 	"ai-agent/model/geminimodel"
 	"ai-agent/pkg/geminipkg"
+	"ai-agent/pkg/secretspkg"
 	"ai-agent/router"
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
@@ -22,7 +23,11 @@ import (
 func InitializeServer() (*Server, error) {
 	engine := NewGinEngine()
 	controller := healthcontroller.New()
-	gemini, err := geminipkg.New()
+	appConfig, err := secretspkg.New()
+	if err != nil {
+		return nil, err
+	}
+	gemini, err := geminipkg.New(appConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -42,5 +47,5 @@ func NewGinEngine() *gin.Engine {
 
 var ProviderSet = wire.NewSet(
 	NewGinEngine,
-	New, healthcontroller.New, wire.Bind(new(geminimodel.Gemini), new(*geminipkg.Gemini)), agentcontroller.New, router.New, geminipkg.New,
+	New, healthcontroller.New, wire.Bind(new(geminimodel.Gemini), new(*geminipkg.Gemini)), agentcontroller.New, router.New, geminipkg.New, secretspkg.New,
 )
