@@ -2,10 +2,10 @@ package geminipkg
 
 import (
 	"ai-agent/model/geminimodel"
+	"ai-agent/pkg/secretspkg"
 	"context"
 	"fmt"
 	"log"
-	"os"
 
 	"google.golang.org/genai"
 )
@@ -14,19 +14,22 @@ type Gemini struct {
 	model   string
 	client  *genai.Client
 	session *genai.Chat
+	cfg     *secretspkg.AppConfig
 }
 
 var (
-	apiKey      = os.Getenv("GEMINI_API_KEY")
-	modelName   = os.Getenv("MODEL_ID")
 	temperature = float32(0.2)
 	maxTokens   = int32(1024)
 	system      = "You are a helpful AI assistant."
 	ctx         = context.Background()
 )
 
-func New() (*Gemini, error) {
-	log.Printf("Initializing Gemini client with model: %s and KEY %s", modelName, apiKey)
+func New(cfg *secretspkg.AppConfig) (*Gemini, error) {
+	apiKey := cfg.GeminiAPIKey
+	modelName := cfg.ModelID
+
+	log.Printf("Initializing Gemini client with model: %s", modelName)
+
 	c, err := genai.NewClient(ctx, &genai.ClientConfig{APIKey: apiKey})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create genai client: %w", err)
