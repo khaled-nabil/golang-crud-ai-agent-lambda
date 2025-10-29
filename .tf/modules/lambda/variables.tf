@@ -45,3 +45,14 @@ variable "memory_size" {
   type        = number
   default     = 128
 }
+
+variable "secrets_arn" {
+  description = "The ARN of the secret in AWS Secrets Manager."
+  type        = string
+}
+
+variable "gin_mode" {
+    description = "The Gin mode for the application (debug, release, test)."
+    type        = string
+    default     = "release"
+}

@@ -1,11 +1,4 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "5.99.1"
-    }
-  }
-}
+## L
 data "aws_iam_policy_document" "assume_lambda_function_role" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -48,6 +41,7 @@ resource "null_resource" "build_binary" {
   }
 }
 
+## ARCHIVE FILE
 data "archive_file" "ai_lambda_archive" {
   depends_on = [null_resource.build_binary]
 
@@ -69,9 +63,35 @@ resource "aws_lambda_function" "ai_lambda_function" {
     Environment = var.environment
     Application = var.app_name
   }
+
+  environment {
+    variables = {
+      SECRETS_ARN = var.secrets_arn
+      GIN_MODE    = var.gin_mode
+    }
+  }
 }
 
 resource "aws_cloudwatch_log_group" "log_group" {
   name              = "/aws/lambda/${aws_lambda_function.ai_lambda_function.function_name}"
   retention_in_days = 7
+}
+
+
+## SECRET MANAGER
+data "aws_iam_policy_document" "secrets_manager_read" {
+  statement {
+    actions   = ["secretsmanager:GetSecretValue"]
+    resources = [var.secrets_arn]
+  }
+}
+
+resource "aws_iam_policy" "secrets_manager_read_policy" {
+  name   = "${var.app_name}-${var.environment}-secrets-read-policy"
+  policy = data.aws_iam_policy_document.secrets_manager_read.json
+}
+
+resource "aws_iam_role_policy_attachment" "secrets_manager_access" {
+  role       = aws_iam_role.ai_lambda_role.name
+  policy_arn = aws_iam_policy.secrets_manager_read_policy.arn
 }
