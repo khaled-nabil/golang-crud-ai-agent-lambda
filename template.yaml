@@ -16,9 +16,10 @@ Resources:
       MemorySize: 1024
       Environment:
         Variables:
-          ENVIRONMENT: development
           GIN_MODE: debug
+          ENVIRONMENT: test
           AWS_REGION: eu-central-1
           LOG_LEVEL: debug
-          MODEL_ID: ""
-          GEMINI_API_KEY:
+          SECRETS_ARN: ai-agent-lambda-test-secret-secrets
+          DYNAMODB_TABLE_NAME: ai-agent-lambda-test-table
+
