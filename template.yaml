@@ -20,5 +20,5 @@ Resources:
           GIN_MODE: debug
           AWS_REGION: eu-central-1
           LOG_LEVEL: debug
-          MODEL_ID: "gemini-2.5-flash"
+          MODEL_ID: ""
           GEMINI_API_KEY:
