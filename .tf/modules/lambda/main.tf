@@ -1,4 +1,3 @@
-## L
 data "aws_iam_policy_document" "assume_lambda_function_role" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -68,6 +67,7 @@ resource "aws_lambda_function" "ai_lambda_function" {
     variables = {
       SECRETS_ARN = var.secrets_arn
       GIN_MODE    = var.gin_mode
+      DYNAMODB_TABLE_NAME = var.table_name
     }
   }
 }

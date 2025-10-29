@@ -52,7 +52,12 @@ variable "secrets_arn" {
 }
 
 variable "gin_mode" {
-    description = "The Gin mode for the application (debug, release, test)."
-    type        = string
-    default     = "release"
+  description = "The Gin mode for the application (debug, release, test)."
+  type        = string
+  default     = "release"
+}
+
+variable "table_name" {
+  description = "The name of the DynamoDB table."
+  type        = string
 }
