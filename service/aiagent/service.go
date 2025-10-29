@@ -1,19 +1,39 @@
 package aiagent
 
-import "ai-agent/pkg/geminipkg"
+import (
+	"ai-agent/model/datamodels"
+	"ai-agent/model/servicemodels"
+)
 
 type (
 	Service struct {
-		agent *geminipkg.Gemini
+		agent datamodels.Gemini
+		db    servicemodels.AgentRepo
 	}
 )
 
-func New(agent *geminipkg.Gemini) *Service {
-	return &Service{agent: agent}
+var (
+	userRole = "user"
+	aiRole   = "ai"
+)
+
+func New(agent datamodels.Gemini, db servicemodels.AgentRepo) *Service {
+	return &Service{agent, db}
 }
 
-func (s *Service) SendMessageWithHistory(message string) (string, error) {
+func (s *Service) SendMessageWithHistory(userID, message string) (string, error) {
+	if err := s.db.StoreChatMessage(userID, message, userRole); err != nil {
+		return "", err
+	}
+
 	r, _, err := s.agent.Chat(message, nil)
+	if err != nil {
+		return "", err
+	}
+
+	if err = s.db.StoreChatMessage(userID, r, aiRole); err != nil {
+		return "", err
+	}
 
 	return r, err
 }
