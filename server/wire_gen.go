@@ -9,10 +9,12 @@ package server
 import (
 	"ai-agent/controller/agentcontroller"
 	"ai-agent/controller/healthcontroller"
-	"ai-agent/model/aiagentmodel"
-	"ai-agent/model/geminimodel"
+	"ai-agent/model/datamodels"
+	"ai-agent/model/servicemodels"
+	"ai-agent/pkg/dynamodbpkg"
 	"ai-agent/pkg/geminipkg"
 	"ai-agent/pkg/secretspkg"
+	"ai-agent/repositories/chatpersistance"
 	"ai-agent/router"
 	"ai-agent/service/aiagent"
 	"github.com/gin-gonic/gin"
@@ -33,7 +35,12 @@ func InitializeServer() (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	service := aiagent.New(gemini)
+	dynamoDB, err := dynamodbpkg.New()
+	if err != nil {
+		return nil, err
+	}
+	repo := chatpersistance.New(dynamoDB)
+	service := aiagent.New(gemini, repo)
 	agentcontrollerController := agentcontroller.New(service)
 	routerRouter := router.New(engine, controller, agentcontrollerController)
 	server := New(engine, routerRouter)
@@ -48,7 +55,6 @@ func NewGinEngine() *gin.Engine {
 	return gin.New()
 }
 
-var ProviderSet = wire.NewSet(
-	NewGinEngine,
-	New, healthcontroller.New, wire.Bind(new(geminimodel.Gemini), new(*geminipkg.Gemini)), agentcontroller.New, wire.Bind(new(aiagentmodel.AgentService), new(*aiagent.Service)), router.New, geminipkg.New, secretspkg.New, aiagent.New,
+var ProviderSet = wire.NewSet(wire.Bind(new(datamodels.Gemini), new(*geminipkg.Gemini)), wire.Bind(new(datamodels.DynamoDB), new(*dynamodbpkg.DynamoDB)), wire.Bind(new(servicemodels.AgentService), new(*aiagent.Service)), wire.Bind(new(servicemodels.AgentRepo), new(*chatpersistance.Repo)), NewGinEngine,
+	New, healthcontroller.New, agentcontroller.New, router.New, geminipkg.New, secretspkg.New, aiagent.New, dynamodbpkg.New, chatpersistance.New,
 )
