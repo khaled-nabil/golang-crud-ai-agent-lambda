@@ -1,0 +1,5 @@
+{
+  "httpMethod": "POST",
+  "path": "/api/v1/send",
+  "body": "{\"message\": \"Hello, how are you?\",\"user_id\": \"754778bb-e286-4d26-8b32-77c939f5ee59\"}"
+}
