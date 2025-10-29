@@ -6,10 +6,12 @@ package server
 import (
 	"ai-agent/controller/agentcontroller"
 	"ai-agent/controller/healthcontroller"
+	"ai-agent/model/aiagentmodel"
 	"ai-agent/model/geminimodel"
 	"ai-agent/pkg/geminipkg"
 	"ai-agent/pkg/secretspkg"
 	"ai-agent/router"
+	"ai-agent/service/aiagent"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -28,9 +30,11 @@ var ProviderSet = wire.NewSet(
 	healthcontroller.New,
 	wire.Bind(new(geminimodel.Gemini), new(*geminipkg.Gemini)),
 	agentcontroller.New,
+	wire.Bind(new(aiagentmodel.AgentService), new(*aiagent.Service)),
 	router.New,
 	geminipkg.New,
 	secretspkg.New,
+	aiagent.New,
 )
 
 func InitializeServer() (*Server, error) {
