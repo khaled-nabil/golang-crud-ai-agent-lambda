@@ -9,6 +9,7 @@ type (
 
 	AgentRepo interface {
 		StoreConversation(userID string, history *datamodels.HistoryContext) error
+		GetUserHistory(id string) ([]datamodels.HistoryContext, error)
 	}
 
 	RequestBody struct {

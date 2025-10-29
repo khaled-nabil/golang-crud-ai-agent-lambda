@@ -5,7 +5,6 @@ import (
 	"ai-agent/pkg/secretspkg"
 	"context"
 	"fmt"
-	"log"
 
 	"google.golang.org/genai"
 )
@@ -27,8 +26,6 @@ var (
 func New(cfg *secretspkg.AppConfig) (*Gemini, error) {
 	apiKey := cfg.GeminiAPIKey
 	modelName := cfg.ModelID
-
-	log.Printf("Initializing Gemini client with model: %s", modelName)
 
 	c, err := genai.NewClient(ctx, &genai.ClientConfig{APIKey: apiKey})
 	if err != nil {

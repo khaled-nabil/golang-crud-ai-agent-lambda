@@ -17,6 +17,10 @@ type (
 	}
 )
 
+var (
+	limit int32 = 10
+)
+
 func New(pkg datamodels.DynamoDB) *Repo {
 	return &Repo{pkg}
 }
@@ -31,4 +35,13 @@ func (r *Repo) StoreConversation(id string, h *datamodels.HistoryContext) error 
 	err := r.pkg.StoreItem(chatMessage)
 
 	return err
+}
+
+func (r *Repo) GetUserHistory(id string) ([]datamodels.HistoryContext, error) {
+	items, err := r.pkg.RetrieveItems(id, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	return items, nil
 }

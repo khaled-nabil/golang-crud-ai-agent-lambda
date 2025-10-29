@@ -7,6 +7,7 @@ type (
 
 	DynamoDB interface {
 		StoreItem(item interface{}) error
+		RetrieveItems(id string, limit int32) ([]HistoryContext, error)
 	}
 
 	HistoryContext struct {
