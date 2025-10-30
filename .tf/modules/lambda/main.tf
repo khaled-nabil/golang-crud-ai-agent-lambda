@@ -65,9 +65,11 @@ resource "aws_lambda_function" "ai_lambda_function" {
 
   environment {
     variables = {
-      SECRETS_ARN = var.secrets_arn
-      GIN_MODE    = var.gin_mode
-      DYNAMODB_TABLE_NAME = var.table_name
+      SECRETS_ARN            = var.secrets_arn
+      GIN_MODE               = var.gin_mode
+      DYNAMODB_TABLE_NAME    = var.db_table_name
+      DYNAMODB_USER_ID_KEY   = var.db_user_id_key
+      DYNAMODB_TIMESTAMP_KEY = var.db_timestamp_key
     }
   }
 }

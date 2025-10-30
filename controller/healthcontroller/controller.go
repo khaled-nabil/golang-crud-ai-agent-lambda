@@ -1,7 +1,6 @@
 package healthcontroller
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,7 +14,5 @@ func New() *Controller {
 }
 
 func (*Controller) Health(c *gin.Context) {
-	log.Println("Health check OK")
-
 	c.JSON(http.StatusCreated, "OK")
 }

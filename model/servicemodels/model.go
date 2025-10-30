@@ -1,12 +1,15 @@
 package servicemodels
 
+import "ai-agent/model/datamodels"
+
 type (
 	AgentService interface {
 		SendMessageWithHistory(userID, message string) (string, error)
 	}
 
 	AgentRepo interface {
-		StoreChatMessage(userID, message, role string) error
+		StoreConversation(userID string, history *datamodels.HistoryContext) error
+		GetUserHistory(id string) ([]datamodels.HistoryContext, error)
 	}
 
 	RequestBody struct {

@@ -5,7 +5,6 @@ import (
 	"ai-agent/pkg/secretspkg"
 	"context"
 	"fmt"
-	"log"
 
 	"google.golang.org/genai"
 )
@@ -27,8 +26,6 @@ var (
 func New(cfg *secretspkg.AppConfig) (*Gemini, error) {
 	apiKey := cfg.GeminiAPIKey
 	modelName := cfg.ModelID
-
-	log.Printf("Initializing Gemini client with model: %s", modelName)
 
 	c, err := genai.NewClient(ctx, &genai.ClientConfig{APIKey: apiKey})
 	if err != nil {
@@ -74,10 +71,16 @@ func (g *Gemini) createChat(history []*genai.Content) error {
 	return nil
 }
 
-func (g *Gemini) Chat(userInput string, h []datamodels.HistoryContext) (string, []datamodels.HistoryContext, error) {
+func (g *Gemini) Chat(userInput string, history []datamodels.HistoryContext) (*datamodels.HistoryContext, error) {
+	if userInput == "" {
+		return nil, fmt.Errorf("user input or response is empty")
+	}
+
 	if g.session == nil {
-		if err := g.createChat(nil); err != nil {
-			return "", nil, err
+		h := transformHistoryToGeminiContent(history)
+
+		if err := g.createChat(h); err != nil {
+			return nil, err
 		}
 	}
 
@@ -87,11 +90,11 @@ func (g *Gemini) Chat(userInput string, h []datamodels.HistoryContext) (string, 
 
 	resp, err := g.session.Send(ctx, uip)
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to send message: %w", err)
+		return nil, fmt.Errorf("failed to send message: %w", err)
 	}
 
 	if len(resp.Candidates) == 0 {
-		return "", nil, fmt.Errorf("no response received")
+		return nil, fmt.Errorf("no response received")
 	}
 
 	tr := ""
@@ -99,23 +102,36 @@ func (g *Gemini) Chat(userInput string, h []datamodels.HistoryContext) (string, 
 		tr += part.Text
 	}
 
-	h, err = extractHistory(&userInput, &tr, h)
-	if err != nil {
-		return "", nil, err
-	}
-
-	return tr, h, nil
+	return &datamodels.HistoryContext{
+		UserInput: userInput,
+		Response:  tr,
+	}, nil
 }
 
-func extractHistory(ui *string, r *string, h []datamodels.HistoryContext) ([]datamodels.HistoryContext, error) {
-	if ui == nil || r == nil {
-		return nil, fmt.Errorf("user input or response is empty")
+func transformHistoryToGeminiContent(h []datamodels.HistoryContext) []*genai.Content {
+	var history []*genai.Content
+
+	for _, item := range h {
+		if item.UserInput != "" {
+			history = append(history, &genai.Content{
+				Role: "user",
+				Parts: []*genai.Part{
+					{
+						Text: item.UserInput,
+					},
+				},
+			})
+		}
+		if item.Response != "" {
+			history = append(history, &genai.Content{
+				Role: "model",
+				Parts: []*genai.Part{
+					{
+						Text: item.Response,
+					},
+				},
+			})
+		}
 	}
-
-	h = append(h, datamodels.HistoryContext{
-		UserInput: ui,
-		Response:  r,
-	})
-
-	return h, nil
+	return history
 }

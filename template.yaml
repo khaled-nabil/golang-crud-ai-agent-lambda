@@ -22,4 +22,6 @@ Resources:
           LOG_LEVEL: debug
           SECRETS_ARN: ai-agent-lambda-test-secret-secrets
           DYNAMODB_TABLE_NAME: ai-agent-lambda-test-table
+          DYNAMODB_USER_ID_KEY: user_id
+          DYNAMODB_TIMESTAMP_KEY: timestamp
 
