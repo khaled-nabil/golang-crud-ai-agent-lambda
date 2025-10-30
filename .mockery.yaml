@@ -1,0 +1,13 @@
+all: True
+packages:
+  ai-agent/model/datamodels:
+    config:
+      all: True
+      dir: "{{.InterfaceDir}}/mocks"
+      outpkg: "mocks"
+  ai-agent/model/servicemodels:
+    config:
+      all: True
+      dir: "{{.InterfaceDir}}/mocks"
+      outpkg: "mocks"
+
