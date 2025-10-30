@@ -3,7 +3,6 @@ package router
 import (
 	"ai-agent/controller/agentcontroller"
 	"ai-agent/controller/healthcontroller"
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,5 +24,5 @@ func New(
 func (r *Router) Route() {
 	r.Gin.Group("/api/v1").
 		GET("/health", r.hctrl.Health).
-		POST(fmt.Sprintf("/send"), r.actrl.SendMessage)
+		POST("/send", r.actrl.SendMessage)
 }

@@ -13,7 +13,6 @@ type Gemini struct {
 	model   string
 	client  *genai.Client
 	session *genai.Chat
-	cfg     *secretspkg.AppConfig
 }
 
 var (
