@@ -58,3 +58,8 @@ module "ai_agent_dynamodb" {
 
   table_name = "${var.function_name}-${var.environment}-table"
 }
+
+output "lambda_function_url" {
+  description = "The URL of the Lambda function."
+  value       = module.ai-agent-lambda.lambda_function_url
+}
