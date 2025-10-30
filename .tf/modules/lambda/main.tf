@@ -79,6 +79,18 @@ resource "aws_cloudwatch_log_group" "log_group" {
   retention_in_days = 7
 }
 
+resource "aws_lambda_function_url" "url" {
+  function_name      = aws_lambda_function.ai_lambda_function.function_name
+  authorization_type = "NONE"
+
+  cors {
+    allow_credentials = true
+    allow_origins     = ["*"]
+    allow_methods     = ["*"]
+    allow_headers     = ["*"]
+    expose_headers    = ["*"]
+  }
+}
 
 ## SECRET MANAGER
 data "aws_iam_policy_document" "secrets_manager_read" {
