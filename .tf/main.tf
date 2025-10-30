@@ -1,8 +1,14 @@
 terraform {
+  backend "s3" {
+    bucket = "terraform-state"
+    key    = "ai-agent/terraform.tfstate"
+    region = "eu-central-1"
+  }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "5.0.0"
     }
     archive = {
       source = "hashicorp/archive"
@@ -14,7 +20,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "eu-central-1"
+  region = var.aws_region
 
   default_tags {
     tags = {
