@@ -14,7 +14,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "eu-central-1"
+  region = var.aws_region
 
   default_tags {
     tags = {
@@ -39,6 +39,17 @@ module "ai-agent-lambda" {
   db_table_name    = module.ai_agent_dynamodb.table_name
   db_user_id_key   = module.ai_agent_dynamodb.user_id_key
   db_timestamp_key = module.ai_agent_dynamodb.timestamp_key
+}
+
+module "ai_agent_api_gateway" {
+  source     = "./modules/api-gateway"
+  depends_on = [module.ai-agent-lambda]
+
+  api_name             = "ai-agent-api"
+  stage_name           = "local"
+  lambda_function_name = module.ai-agent-lambda.function_name
+  lambda_invoke_arn    = module.ai-agent-lambda.invoke_arn
+  aws_region           = var.aws_region
 }
 
 module "ai_agent_secrets" {

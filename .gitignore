@@ -46,3 +46,7 @@ env.json
 tfplan.plan
 *.tfstate*
 .terraform.lock.hcl
+volume/cache/machine.json
+volume/cache/server.test.pem
+volume/cache/server.test.pem.crt
+volume/cache/server.test.pem.key
