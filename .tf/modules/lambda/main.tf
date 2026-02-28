@@ -97,3 +97,13 @@ resource "aws_iam_role_policy_attachment" "secrets_manager_access" {
   role       = aws_iam_role.ai_lambda_role.name
   policy_arn = aws_iam_policy.secrets_manager_read_policy.arn
 }
+
+output "invoke_arn" {
+  description = "The invoke ARN of the Lambda function."
+  value       = aws_lambda_function.ai_lambda_function.invoke_arn
+}
+
+output "function_name" {
+  description = "The name of the Lambda function."
+  value       = aws_lambda_function.ai_lambda_function.function_name
+}

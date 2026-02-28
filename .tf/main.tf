@@ -41,6 +41,17 @@ module "ai-agent-lambda" {
   db_timestamp_key = module.ai_agent_dynamodb.timestamp_key
 }
 
+module "ai_agent_api_gateway" {
+  source     = "./modules/api-gateway"
+  depends_on = [module.ai-agent-lambda]
+
+  api_name             = "ai-agent-api"
+  stage_name           = "local"
+  lambda_function_name = module.ai-agent-lambda.function_name
+  lambda_invoke_arn    = module.ai-agent-lambda.invoke_arn
+  aws_region           = var.aws_region
+}
+
 module "ai_agent_secrets" {
   source = "./modules/secret-manager"
 

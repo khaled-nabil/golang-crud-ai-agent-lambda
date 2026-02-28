@@ -109,3 +109,18 @@ You can run the full stack locally using LocalStack to emulate AWS services.
      -e invokation/<event-file>.json
    ```
 
+5. **Call the API via REST (API Gateway)**  
+   The stack exposes the Lambda through API Gateway. Get the base URL from Terraform (run from the project root). LocalStack uses the `/_aws/execute-api/<api_id>/<stage>` path:
+   ```bash
+   cd .tf && tflocal output -raw localstack_invoke_url && cd ..
+   ```
+   Then call your endpoints (append the path to the base URL):
+   ```bash
+   # Health check
+   curl "$(cd .tf && tflocal output -raw localstack_invoke_url)/api/v1/health"
+
+   # Send a message (replace <BASE_URL> with the output from above)
+   curl -X POST "<BASE_URL>/api/v1/send" \
+     -H "Content-Type: application/json" \
+     -d '{"message": "Hello, how are you?", "user_id": "754778bb-e286-4d26-8b32-77c939f5ee59"}'
+   ```

@@ -11,8 +11,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: .
-      Handler: ./cmd
-      Runtime: go1.x
+      Handler: bootstrap
+      Runtime: provided.al2023
       MemorySize: 1024
       Environment:
         Variables:
