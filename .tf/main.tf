@@ -1,8 +1,14 @@
 terraform {
+  backend "s3" {
+    bucket = "terraform-state"
+    key    = "ai-agent/terraform.tfstate"
+    region = "eu-central-1"
+  }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "5.0.0"
     }
     archive = {
       source = "hashicorp/archive"
@@ -68,4 +74,9 @@ module "ai_agent_dynamodb" {
   environment   = var.environment
 
   table_name = "${var.function_name}-${var.environment}-table"
+}
+
+output "lambda_function_url" {
+  description = "The URL of the Lambda function."
+  value       = module.ai-agent-lambda.lambda_function_url
 }

@@ -14,6 +14,7 @@ import (
 	"ai-agent/repositories/chatpersistance"
 	"ai-agent/router"
 	"ai-agent/service/aiagent"
+	"ai-agent/usecase/errors"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -33,6 +34,7 @@ var ProviderSet = wire.NewSet(
 	wire.Bind(new(servicemodels.AgentRepo), new(*chatpersistance.Repo)),
 	NewGinEngine,
 	New,
+	errors.New,
 	healthcontroller.New,
 	agentcontroller.New,
 	router.New,
