@@ -13,6 +13,11 @@ type (
 	AppConfig struct {
 		GeminiAPIKey string `json:"GEMINI_API_KEY"`
 		ModelID      string `json:"MODEL_ID"`
+		DBHost       string `json:"DB_HOST"`
+		DBPort       string `json:"DB_PORT"`
+		DBName       string `json:"DB_NAME"`
+		DBUser       string `json:"DB_USER"`
+		DBPassword   string `json:"DB_PASSWORD"`
 	}
 )
 
