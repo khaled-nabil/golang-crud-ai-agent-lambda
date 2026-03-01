@@ -31,7 +31,7 @@ provider "aws" {
 
 module "ai-agent-lambda" {
   source     = "./modules/lambda"
-  depends_on = [module.ai_agent_secrets, module.ai_agent_dynamodb]
+  depends_on = [module.ai_agent_secrets]
 
   function_name = var.function_name
   environment   = var.environment
@@ -42,9 +42,6 @@ module "ai-agent-lambda" {
   archive_path = "${path.module}/.build/archive.zip"
 
   secrets_arn      = module.ai_agent_secrets.secret_arn
-  db_table_name    = module.ai_agent_dynamodb.table_name
-  db_user_id_key   = module.ai_agent_dynamodb.user_id_key
-  db_timestamp_key = module.ai_agent_dynamodb.timestamp_key
 }
 
 module "ai_agent_api_gateway" {
@@ -65,15 +62,6 @@ module "ai_agent_secrets" {
   environment   = var.environment
 
   secret_name = "${var.function_name}-${var.environment}-secret"
-}
-
-module "ai_agent_dynamodb" {
-  source = "./modules/dynamodb"
-
-  function_name = var.function_name
-  environment   = var.environment
-
-  table_name = "${var.function_name}-${var.environment}-table"
 }
 
 output "lambda_function_url" {

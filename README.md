@@ -39,7 +39,7 @@ The application is designed to be a conversational AI, with plans to implement a
 - Go 1.24.0
 - AWS Lambda Go
 - AWS Secret Manager
-- AWS DynamoDB
+- PostgreSQL (local via Docker)
 - AWS SAM CLI
 - Terraform
 
@@ -76,40 +76,75 @@ go mod tidy
   AWS_PROFILE="PROFILE_NAME" make plan
   AWS_PROFILE="PROFILE_NAME" make apply
   ```
-4. Store your Google Gemini API key in AWS SecretsManager with the name `GEMINI_API_KEY`, and your Gemini model name with the name `MODEL_ID`.
+4. Add the secret value to AWS Secrets Manager manually. Terraform creates the secret store; you must add the secret version with a JSON object containing these keys:
+
+   | Key         | Description                          |
+   |-------------|--------------------------------------|
+   | `GEMINI_API_KEY` | Your Google Gemini API key       |
+   | `MODEL_ID`       | Gemini model name (e.g. `gemini-1.5-flash`) |
+   | `DB_HOST`        | Database host (e.g. `host.docker.internal` for LocalStack) |
+   | `DB_PORT`        | Database port (e.g. `5432`)         |
+   | `DB_NAME`        | Database name                       |
+   | `DB_USER`        | Database user                       |
+   | `DB_PASSWORD`    | Database password                   |
+
+   Example secret value (JSON):
+   ```json
+   {
+     "GEMINI_API_KEY": "your-api-key",
+     "MODEL_ID": "gemini-1.5-flash",
+     "DB_HOST": "host.docker.internal",
+     "DB_PORT": "5432",
+     "DB_NAME": "aiagent",
+     "DB_USER": "aiagent",
+     "DB_PASSWORD": "localpostgres"
+   }
+   ```
 
 Now the application is deployed on AWS Lambda and ready to use.
 
 ### Running Locally with LocalStack
 
-You can run the full stack locally using LocalStack to emulate AWS services.
+You can run the full stack locally using LocalStack to emulate AWS services. Postgres runs via Docker Compose (no RDS).
 
-1. Start LocalStack using Docker Compose:
+1. Copy `.env.example` to `.env` and set the Postgres credentials (used by docker-compose):
    ```bash
-   docker compose up localstack
+   cp .env.example .env
+   # Edit .env if needed (defaults: POSTGRES_USER=aiagent, POSTGRES_PASSWORD=localpostgres, POSTGRES_DB=aiagent)
    ```
-2. In a separate terminal, apply Terraform resources against LocalStack using `tflocal`:
+
+2. Start LocalStack and Postgres using Docker Compose:
+   ```bash
+   docker compose up -d
+   ```
+3. In a separate terminal, apply Terraform resources against LocalStack using `tflocal`:
    ```bash
    cd .tf
    tflocal init
    tflocal apply
    cd ..
    ```
-3. Export AWS environment variables so the Go SDK and SAM talk to LocalStack:
+4. Export AWS environment variables so the Go SDK and SAM talk to LocalStack:
    ```bash
    export AWS_ACCESS_KEY_ID=test
    export AWS_SECRET_ACCESS_KEY=test
    export AWS_REGION=eu-central-1
    export AWS_ENDPOINT_URL=http://localhost:4566
    ```
-4. Run the Lambda locally via SAM using `template.yaml` and one of the `invokation/*.json` events:
+5. Add the secret value to AWS Secrets Manager (LocalStack). Use the same keys as above. For local runs, use `DB_HOST=host.docker.internal` so Lambda can reach the Postgres container on your host. Example via AWS CLI:
+   ```bash
+   aws secretsmanager put-secret-value --secret-id ai-agent-lambda-test-secret-secrets \
+     --secret-string '{"GEMINI_API_KEY":"your-key","MODEL_ID":"gemini-1.5-flash","DB_HOST":"host.docker.internal","DB_PORT":"5432","DB_NAME":"aiagent","DB_USER":"aiagent","DB_PASSWORD":"localpostgres"}'
+   ```
+
+6. Run the Lambda locally via SAM using `template.yaml` and one of the `invokation/*.json` events:
    ```bash
    sam local invoke AiAgentServerlessAPI \
      -t template.yaml \
      -e invokation/<event-file>.json
    ```
 
-5. **Call the API via REST (API Gateway)**  
+7. **Call the API via REST (API Gateway)**  
    The stack exposes the Lambda through API Gateway. Get the base URL from Terraform (run from the project root). LocalStack uses the `/_aws/execute-api/<api_id>/<stage>` path:
    ```bash
    cd .tf && tflocal output -raw localstack_invoke_url && cd ..

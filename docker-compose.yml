@@ -11,3 +11,16 @@ services:
     volumes:
       - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: "${LOCALSTACK_DOCKER_NAME:-localstack-main}-postgres"
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

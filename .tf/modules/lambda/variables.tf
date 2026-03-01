@@ -56,18 +56,3 @@ variable "gin_mode" {
   type        = string
   default     = "release"
 }
-
-variable "db_table_name" {
-  description = "The name of the DynamoDB table."
-  type        = string
-}
-
-variable "db_user_id_key" {
-  description = "The user ID key for the DynamoDB table."
-  type        = string
-}
-
-variable "db_timestamp_key" {
-  description = "The timestamp key for the DynamoDB table."
-  type        = string
-}
