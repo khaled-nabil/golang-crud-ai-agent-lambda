@@ -124,6 +124,12 @@ You can run the full stack locally using LocalStack to emulate AWS services. Pos
    tflocal apply
    cd ..
    ```
+
+   Note: you might run into an error if the S3 bucket does not exist. To resolve pass the configuration via CLI arguments alongside S3_HOSTNAME=localhost to fix internal DNS routing.
+   ```bash
+   S3_HOSTNAME=localhost tflocal init -backend-config="force_path_style=true" -reconfigure
+   ```
+
 4. Export AWS environment variables so the Go SDK and SAM talk to LocalStack:
    ```bash
    export AWS_ACCESS_KEY_ID=test
