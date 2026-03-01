@@ -52,6 +52,10 @@ resource "aws_lambda_function" "ai_lambda_function" {
   runtime          = var.runtime
   memory_size      = var.memory_size
 
+  layers = [
+    "arn:aws:lambda:${var.aws_region}:753240598075:layer:LambdaAdapterLayerX86:23"
+  ]
+
   tags = {
     Environment = var.environment
     Application = var.app_name
@@ -59,8 +63,9 @@ resource "aws_lambda_function" "ai_lambda_function" {
 
   environment {
     variables = {
-      SECRETS_ARN = var.secrets_arn
-      GIN_MODE    = var.gin_mode
+      SECRETS_ARN  = var.secrets_arn
+      GIN_MODE     = var.gin_mode
+      AWS_LWA_PORT = "8080"
     }
   }
 }

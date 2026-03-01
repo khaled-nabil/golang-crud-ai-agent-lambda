@@ -35,6 +35,7 @@ module "ai-agent-lambda" {
 
   function_name = var.function_name
   environment   = var.environment
+  aws_region    = var.aws_region
 
   app_name     = "ai-agent"
   go_app_path  = "${path.module}/../cmd/main.go"

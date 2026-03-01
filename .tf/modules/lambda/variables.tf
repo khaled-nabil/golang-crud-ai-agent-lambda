@@ -56,3 +56,8 @@ variable "gin_mode" {
   type        = string
   default     = "release"
 }
+
+variable "aws_region" {
+  description = "The AWS region where resources will be deployed."
+  type        = string
+}
