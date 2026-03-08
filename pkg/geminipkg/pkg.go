@@ -2,7 +2,6 @@ package geminipkg
 
 import (
 	"ai-agent/model/datamodels"
-	"ai-agent/pkg/secretspkg"
 	"context"
 	"fmt"
 
@@ -22,7 +21,7 @@ var (
 	ctx         = context.Background()
 )
 
-func New(cfg *secretspkg.AppConfig) (*Gemini, error) {
+func New(cfg *datamodels.AppConfig) (*Gemini, error) {
 	apiKey := cfg.GeminiAPIKey
 	modelName := cfg.ModelID
 
