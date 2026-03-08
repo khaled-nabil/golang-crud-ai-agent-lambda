@@ -1,6 +1,6 @@
 CREATE TABLE documents_gemini (
-    chat_id VARCHAR(255) PRIMARY KEY REFERENCES chat (id) ON DELETE CASCADE,
-    user_id VARCHAR(255) NOT NULL,
+    chat_id UUID PRIMARY KEY REFERENCES chat (id) ON DELETE CASCADE,
+    user_id UUID NOT NULL,
     embedding vector (1536) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
     CONSTRAINT documents_gemini_user_chat_uniq UNIQUE (user_id, chat_id)

@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS chat (
-    id VARCHAR(255) PRIMARY KEY,
-    user_id VARCHAR(255) NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
     message TEXT NOT NULL,
     response TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL
