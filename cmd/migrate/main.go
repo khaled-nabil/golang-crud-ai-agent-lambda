@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"ai-agent/pkg/secretspkg"
+	"ai-agent/adapters/secrets"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -14,7 +14,7 @@ import (
 
 func main() {
 	log.Println("Loading configuration...")
-	appConfig, err := secretspkg.New()
+	appConfig, err := secrets.New()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}

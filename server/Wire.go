@@ -8,8 +8,8 @@ import (
 	"ai-agent/controller/healthcontroller"
 	"ai-agent/model/datamodels"
 	"ai-agent/model/servicemodels"
-	"ai-agent/pkg/geminipkg"
-	"ai-agent/pkg/secretspkg"
+	"ai-agent/adapters/gemini"
+	"ai-agent/adapters/secrets"
 	"ai-agent/repositories/db"
 	"ai-agent/router"
 	"ai-agent/service/aiagent"
@@ -27,7 +27,7 @@ func NewGinEngine() *gin.Engine {
 }
 
 var ProviderSet = wire.NewSet(
-	wire.Bind(new(datamodels.Gemini), new(*geminipkg.Gemini)),
+	wire.Bind(new(datamodels.Gemini), new(*gemini.Gemini)),
 	wire.Bind(new(servicemodels.AgentService), new(*aiagent.Service)),
 	wire.Bind(new(servicemodels.Persistence), new(*db.Repository)),
 	NewGinEngine,
@@ -36,8 +36,8 @@ var ProviderSet = wire.NewSet(
 	healthcontroller.New,
 	agentcontroller.New,
 	router.New,
-	geminipkg.New,
-	secretspkg.New,
+	gemini.New,
+	secrets.New,
 	aiagent.New,
 	db.New,
 )

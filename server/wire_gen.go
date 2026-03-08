@@ -7,12 +7,12 @@
 package server
 
 import (
+	"ai-agent/adapters/gemini"
+	"ai-agent/adapters/secrets"
 	"ai-agent/controller/agentcontroller"
 	"ai-agent/controller/healthcontroller"
 	"ai-agent/model/datamodels"
 	"ai-agent/model/servicemodels"
-	"ai-agent/pkg/geminipkg"
-	"ai-agent/pkg/secretspkg"
 	"ai-agent/repositories/db"
 	"ai-agent/router"
 	"ai-agent/service/aiagent"
@@ -27,11 +27,11 @@ import (
 func InitializeServer() (*Server, error) {
 	engine := NewGinEngine()
 	controller := healthcontroller.New()
-	appConfig, err := secretspkg.New()
+	appConfig, err := secrets.New()
 	if err != nil {
 		return nil, err
 	}
-	gemini, err := geminipkg.New(appConfig)
+	geminiGemini, err := gemini.New(appConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func InitializeServer() (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	service := aiagent.New(gemini, repository)
+	service := aiagent.New(geminiGemini, repository)
 	agentcontrollerController := agentcontroller.New(service)
 	routerRouter := router.New(engine, controller, agentcontrollerController)
 	server := New(engine, routerRouter)
@@ -54,6 +54,6 @@ func NewGinEngine() *gin.Engine {
 	return gin.New()
 }
 
-var ProviderSet = wire.NewSet(wire.Bind(new(datamodels.Gemini), new(*geminipkg.Gemini)), wire.Bind(new(servicemodels.AgentService), new(*aiagent.Service)), wire.Bind(new(servicemodels.Persistence), new(*db.Repository)), NewGinEngine,
-	New, errors.New, healthcontroller.New, agentcontroller.New, router.New, geminipkg.New, secretspkg.New, aiagent.New, db.New,
+var ProviderSet = wire.NewSet(wire.Bind(new(datamodels.Gemini), new(*gemini.Gemini)), wire.Bind(new(servicemodels.AgentService), new(*aiagent.Service)), wire.Bind(new(servicemodels.Persistence), new(*db.Repository)), NewGinEngine,
+	New, errors.New, healthcontroller.New, agentcontroller.New, router.New, gemini.New, secrets.New, aiagent.New, db.New,
 )
