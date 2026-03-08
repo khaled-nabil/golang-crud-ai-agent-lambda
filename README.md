@@ -13,9 +13,9 @@ The application is designed to be a conversational AI, with plans to implement a
 
 ## Features
 
-- Basic conversational AI functionality.
-- Current RAG Systems implements a simple context window approach of 10 Conversations.
-- Maintains single user conversation history in DynamoDB.
+- Basic conversational AI functionality (using Gemini).
+- Maintains user conversation history in Postgres.
+- (Under Progress) Retrieves user related context using Vector Similarity search, as user conversational history is stored as Embeddings.
 
 ## Future Work
 
@@ -40,20 +40,28 @@ The application is designed to be a conversational AI, with plans to implement a
 - AWS Lambda Go
 - AWS Secret Manager
 - PostgreSQL (local via Docker)
-- AWS SAM CLI
 - Terraform
+- Localstack (for local environment deployment)
 
 ## Setup and Run
 
 ### Prerequisites
 
 - Go 1.24.0 or later
-- AWS SAM CLI
 - Docker
+- Docker Compose (local)
+- Localstack (local)
 - Terraform
 - Google Gemini API Key
 - AWS Account with necessary permissions
 - AWS CLI configured
+
+### Considerations
+
+Currently the Postgres DB is run through Docker, via docker compose, together with Localstack.
+As Localstack free version does not support RDS.
+
+When it comes to production, feel free to add your own AWS RDS Terraform configurations, or run Postgres remotely elsewhere.
 
 ### Install Dependencies
 
@@ -78,30 +86,82 @@ go mod tidy
   ```
 4. Add the secret value to AWS Secrets Manager manually. Terraform creates the secret store; you must add the secret version with a JSON object containing these keys:
 
-   | Key         | Description                          |
-   |-------------|--------------------------------------|
-   | `GEMINI_API_KEY` | Your Google Gemini API key       |
-   | `MODEL_ID`       | Gemini model name (e.g. `gemini-1.5-flash`) |
-   | `DB_HOST`        | Database host (e.g. `host.docker.internal` for LocalStack) |
-   | `DB_PORT`        | Database port (e.g. `5432`)         |
-   | `DB_NAME`        | Database name                       |
-   | `DB_USER`        | Database user                       |
-   | `DB_PASSWORD`    | Database password                   |
+   | Key             | Description                                         |
+   |-----------------|-----------------------------------------------------|
+   | `GEMINI_API_KEY`| Your Google Gemini API key                          |
+   | `MODEL_ID`      | Gemini model name (e.g. `gemini-1.5-flash`)         |
+   | `DB_HOST`       | Database host (e.g. RDS endpoint or other Postgres) |
+   | `DB_PORT`       | Database port (e.g. `5432`)                         |
+   | `DB_NAME`       | Database name                                       |
+   | `DB_USER`       | Database user                                       |
+   | `DB_PASSWORD`   | Database password                                   |
 
    Example secret value (JSON):
    ```json
    {
      "GEMINI_API_KEY": "your-api-key",
      "MODEL_ID": "gemini-1.5-flash",
-     "DB_HOST": "host.docker.internal",
+     "DB_HOST": "your-rds-endpoint",
      "DB_PORT": "5432",
      "DB_NAME": "aiagent",
      "DB_USER": "aiagent",
-     "DB_PASSWORD": "localpostgres"
+     "DB_PASSWORD": "prodpassword"
    }
    ```
 
-Now the application is deployed on AWS Lambda and ready to use.
+5. Run database migrations (first time or when the DB schema changes).
+
+   You can either use VSCode or run the migrate command directly.
+
+   **Option A – VSCode launch config**
+
+   Add the following configuration to your `.vscode/launch.json` (or adapt the existing one) and run the `Migrate` config once:
+
+   ```jsonc
+   {
+     "version": "0.2.0",
+     "configurations": [
+       {
+         "name": "Run Service",
+         "type": "go",
+         "request": "launch",
+         "mode": "auto",
+         "program": "${workspaceFolder}/cmd/main.go",
+         "env": {
+           "SECRETS_ARN": "ai-agent-dev-secret-secrets",
+           "GIN_MODE": "debug"
+         }
+       },
+       {
+         "name": "Migrate",
+         "type": "go",
+         "request": "launch",
+         "mode": "auto",
+         "program": "${workspaceFolder}/cmd/migrate/main.go",
+         "env": {
+           "SECRETS_ARN": "ai-agent-dev-secret-secrets",
+           "GIN_MODE": "debug",
+           "DB_MIGRATIONS_PATH": "${workspaceFolder}/migrations"
+         }
+       }
+     ]
+   }
+   ```
+
+   For production, you typically use a different `SECRETS_ARN` that points to your production secret in AWS Secrets Manager (for example `ai-agent-prod-secret-secrets`).
+
+   **Option B – CLI**
+
+   From the project root:
+
+   ```bash
+   SECRETS_ARN="ai-agent-prod-secret-secrets" \
+   GIN_MODE=debug \
+   DB_MIGRATIONS_PATH="$(pwd)/migrations" \
+     go run ./cmd/migrate
+   ```
+
+Now the database is migrated, the application is deployed on AWS Lambda and ready to use.
 
 ### Running Locally with LocalStack
 
@@ -139,18 +199,51 @@ You can run the full stack locally using LocalStack to emulate AWS services. Pos
    ```
 5. Add the secret value to AWS Secrets Manager (LocalStack). Use the same keys as above. For local runs, use `DB_HOST=host.docker.internal` so Lambda can reach the Postgres container on your host. Example via AWS CLI:
    ```bash
-   aws secretsmanager put-secret-value --secret-id ai-agent-lambda-test-secret-secrets \
+   aws --endpoint-url=http://localhost:4566 secretsmanager put-secret-value \
+     --secret-id ai-agent-lambda-test-secret-secrets \
      --secret-string '{"GEMINI_API_KEY":"your-key","MODEL_ID":"gemini-1.5-flash","DB_HOST":"host.docker.internal","DB_PORT":"5432","DB_NAME":"aiagent","DB_USER":"aiagent","DB_PASSWORD":"localpostgres"}'
    ```
 
-6. Run the Lambda locally via SAM using `template.yaml` and one of the `invokation/*.json` events:
+6. Run database migrations against the LocalStack Postgres (first time or on schema change).
+
+   **Option A – VSCode launch config**
+
+   Add a LocalStack-specific migrate configuration if you want to separate it:
+
+   ```jsonc
+   {
+     "name": "Migrate (LocalStack)",
+     "type": "go",
+     "request": "launch",
+     "mode": "auto",
+     "program": "${workspaceFolder}/cmd/migrate/main.go",
+     "env": {
+       "SECRETS_ARN": "ai-agent-lambda-test-secret-secrets",
+       "GIN_MODE": "debug",
+       "AWS_ENDPOINT_URL": "http://localhost:4566",
+       "DB_MIGRATIONS_PATH": "${workspaceFolder}/migrations"
+     }
+   }
+   ```
+
+   **Option B – CLI**
+
+   ```bash
+   SECRETS_ARN="ai-agent-lambda-test-secret-secrets" \
+   GIN_MODE=debug \
+   AWS_ENDPOINT_URL="http://localhost:4566" \
+   DB_MIGRATIONS_PATH="$(pwd)/migrations" \
+     go run ./cmd/migrate
+   ```
+
+7. Run the Lambda locally via SAM using `template.yaml` and one of the `invokation/*.json` events:
    ```bash
    sam local invoke AiAgentServerlessAPI \
      -t template.yaml \
      -e invokation/<event-file>.json
    ```
 
-7. **Call the API via REST (API Gateway)**  
+8. **Call the API via REST (API Gateway)**  
    The stack exposes the Lambda through API Gateway. Get the base URL from Terraform (run from the project root). LocalStack uses the `/_aws/execute-api/<api_id>/<stage>` path:
    ```bash
    cd .tf && tflocal output -raw localstack_invoke_url && cd ..
@@ -165,3 +258,75 @@ You can run the full stack locally using LocalStack to emulate AWS services. Pos
      -H "Content-Type: application/json" \
      -d '{"message": "Hello, how are you?", "user_id": "754778bb-e286-4d26-8b32-77c939f5ee59"}'
    ```
+
+### Running Locally for developement
+
+Following the steps above to run Localstack and Postgres locally, you may run the Go application also locally. To boostrap it with localstack and DB, you may provide the environment variables in the run command.
+
+Since we're using [aws-lambda-web-adapter](https://github.com/awslabs/aws-lambda-web-adapter), the service is able to run also standalone not just as a lambda.
+
+#### Running VSCode
+
+In VSCode, you may defined a `launch.json` config file, which makes you able to run the application locally via the IDE.
+
+Adapt the config below to match your set Environment variables.
+
+```jsonc
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Service",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/cmd/main.go",
+      "env": {
+        "SECRETS_ARN": "ai-agent-dev-secret-secrets",
+        "GIN_MODE": "debug"
+      }
+    },
+    {
+      "name": "Migrate (Local Dev)",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/cmd/migrate/main.go",
+      "env": {
+        "SECRETS_ARN": "ai-agent-dev-secret-secrets",
+        "GIN_MODE": "debug",
+        "DB_MIGRATIONS_PATH": "${workspaceFolder}/migrations"
+      }
+    }
+  ]
+}
+```
+
+To run migrations for your local dev DB, just run the `Migrate (Local Dev)` configuration once from VSCode.
+
+#### Running via CLI
+
+You can also run both the migrate script and the service via CLI.
+
+Run migrations:
+
+```bash
+SECRETS_ARN="ai-agent-dev-secret-secrets" \
+GIN_MODE=debug \
+DB_MIGRATIONS_PATH="$(pwd)/migrations" \
+  go run ./cmd/migrate
+```
+
+Run the service:
+
+```bash
+SECRETS_ARN="ai-agent-dev-secret-secrets" \
+GIN_MODE=debug \
+  go run ./cmd/main.go
+```
+
+Once running, call the local HTTP endpoint (port depends on your Gin setup and adapter config), for example:
+
+```bash
+curl http://localhost:8080/api/v1/health
+```
