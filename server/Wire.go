@@ -4,12 +4,13 @@
 package server
 
 import (
+	"ai-agent/adapters/gemini"
+	"ai-agent/adapters/secrets"
 	"ai-agent/controller/agentcontroller"
 	"ai-agent/controller/healthcontroller"
 	"ai-agent/model/datamodels"
+	"ai-agent/model/errormodels"
 	"ai-agent/model/servicemodels"
-	"ai-agent/adapters/gemini"
-	"ai-agent/adapters/secrets"
 	"ai-agent/repositories/db"
 	"ai-agent/router"
 	"ai-agent/service/aiagent"
@@ -30,9 +31,9 @@ var ProviderSet = wire.NewSet(
 	wire.Bind(new(datamodels.Gemini), new(*gemini.Gemini)),
 	wire.Bind(new(servicemodels.AgentService), new(*aiagent.Service)),
 	wire.Bind(new(servicemodels.Persistence), new(*db.Repository)),
+	wire.Bind(new(errormodels.Errors), new(*errors.ErrorHandler)),
 	NewGinEngine,
 	New,
-	errors.New,
 	healthcontroller.New,
 	agentcontroller.New,
 	router.New,
@@ -40,6 +41,7 @@ var ProviderSet = wire.NewSet(
 	secrets.New,
 	aiagent.New,
 	db.New,
+	errors.New,
 )
 
 func InitializeServer() (*Server, error) {
