@@ -1,37 +1,57 @@
 package agentcontroller
 
 import (
+	"ai-agent/model/dtomodels"
+	"ai-agent/model/errormodels"
 	"ai-agent/model/servicemodels"
 	"net/http"
+
+	"log"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Controller struct {
-	ai servicemodels.AgentService
+	ai       servicemodels.AgentService
+	errorMgr errormodels.Errors
 }
 
-func New(ai servicemodels.AgentService) *Controller {
-	return &Controller{ai}
+func New(ai servicemodels.AgentService, e errormodels.Errors) *Controller {
+	return &Controller{
+		ai:       ai,
+		errorMgr: e,
+	}
 }
 
 func (ctrl *Controller) SendMessage(c *gin.Context) {
 	var rq servicemodels.RequestBody
 	if err := c.BindJSON(&rq); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid request body", "code": "1"})
+		ctrl.handleError(c, errormodels.ErrBadRequest, err.Error())
 		return
 	}
 
 	if rq.UserID == "" {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
+		ctrl.handleError(c, errormodels.ErrUnauthorized, "user not authenticated")
 		return
 	}
 
 	resp, err := ctrl.ai.SendMessageWithHistory(rq.UserID, rq.Message)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctrl.handleError(c, errormodels.ErrGeneric, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusCreated, resp)
+	c.JSON(http.StatusCreated, dtomodels.GenAIResponse{
+		Message: resp,
+	})
+}
+
+func (ctrl *Controller) handleError(c *gin.Context, code errormodels.ErrorCodes, debugMsg string) {
+	log.Printf("Error [%s]: %s", code, debugMsg)
+
+	formatted := ctrl.errorMgr.GetFormattedError(code)
+
+	c.AbortWithStatusJSON(formatted.Code, gin.H{
+		"message": formatted.Message,
+	})
 }
