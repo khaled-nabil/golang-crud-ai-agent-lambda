@@ -34,8 +34,8 @@ func (r *Repository) StoreConversation(userID string, h *datamodels.HistoryConte
     `, chatTable)
 
 	err = tx.
-	QueryRow(r.ctx, chatQuery, userID, h.UserInput, h.Response).
-	Scan(&chatID, &createdAt)
+		QueryRow(r.ctx, chatQuery, userID, h.UserInput, h.Response).
+		Scan(&chatID, &createdAt)
 	if err != nil {
 		return fmt.Errorf("failed to insert chat: %w", err)
 	}
@@ -72,11 +72,11 @@ func (r *Repository) GetUserHistory(id string) ([]datamodels.Chat, error) {
 	for q.Next() {
 		var chat datamodels.Chat
 		if err := q.Scan(
-			chat.ID,
-			chat.UserID,
-			chat.Message,
-			chat.Response,
-			chat.CreateAt,
+			&chat.ID,
+			&chat.UserID,
+			&chat.Message,
+			&chat.Response,
+			&chat.CreateAt,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan chat: %w", err)
 

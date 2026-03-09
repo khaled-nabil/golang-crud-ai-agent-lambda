@@ -4,7 +4,6 @@ import (
 	"ai-agent/model/datamodels"
 	"context"
 	"fmt"
-	"log"
 
 	"google.golang.org/genai"
 )
