@@ -104,3 +104,71 @@ func (_c *MockGemini_Chat_Call) RunAndReturn(run func(userInput string, h []data
 	_c.Call.Return(run)
 	return _c
 }
+
+// EmbedMessage provides a mock function for the type MockGemini
+func (_mock *MockGemini) EmbedMessage(message string, response string) ([]float32, error) {
+	ret := _mock.Called(message, response)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EmbedMessage")
+	}
+
+	var r0 []float32
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(string, string) ([]float32, error)); ok {
+		return returnFunc(message, response)
+	}
+	if returnFunc, ok := ret.Get(0).(func(string, string) []float32); ok {
+		r0 = returnFunc(message, response)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]float32)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = returnFunc(message, response)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockGemini_EmbedMessage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EmbedMessage'
+type MockGemini_EmbedMessage_Call struct {
+	*mock.Call
+}
+
+// EmbedMessage is a helper method to define mock.On call
+//   - message string
+//   - response string
+func (_e *MockGemini_Expecter) EmbedMessage(message interface{}, response interface{}) *MockGemini_EmbedMessage_Call {
+	return &MockGemini_EmbedMessage_Call{Call: _e.mock.On("EmbedMessage", message, response)}
+}
+
+func (_c *MockGemini_EmbedMessage_Call) Run(run func(message string, response string)) *MockGemini_EmbedMessage_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockGemini_EmbedMessage_Call) Return(float32s []float32, err error) *MockGemini_EmbedMessage_Call {
+	_c.Call.Return(float32s, err)
+	return _c
+}
+
+func (_c *MockGemini_EmbedMessage_Call) RunAndReturn(run func(message string, response string) ([]float32, error)) *MockGemini_EmbedMessage_Call {
+	_c.Call.Return(run)
+	return _c
+}
