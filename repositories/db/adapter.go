@@ -23,7 +23,7 @@ func (r *Repository) StoreConversation(userID string, h *datamodels.HistoryConte
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer func() {
-		_ = tx.Rollback(r.ctx) // Discard error
+		_ = tx.Rollback(r.ctx)
 	}()
 
 	var chatID string
