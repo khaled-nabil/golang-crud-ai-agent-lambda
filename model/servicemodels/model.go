@@ -8,7 +8,7 @@ type (
 	}
 
 	Persistence interface {
-		StoreConversation(userID string, history *datamodels.HistoryContext) error
+		StoreConversation(userID string, history *datamodels.HistoryContext, embedding []float32) error
 		GetUserHistory(id string) ([]datamodels.Chat, error)
 	}
 

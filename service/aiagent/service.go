@@ -23,14 +23,17 @@ func (s *Service) SendMessageWithHistory(userID, message string) (string, error)
 		return "", fmt.Errorf("failed to retrieve user history: %w", err)
 	}
 
-	hl := datamodels.ChatListToHistoryContextList(h)
-
-	r, err := s.agent.Chat(message, hl)
+	r, err := s.agent.Chat(message, datamodels.ChatListToHistoryContextList(h))
 	if err != nil {
 		return "", fmt.Errorf("failed to send message to user: %w", err)
 	}
 
-	if err = s.db.StoreConversation(userID, r); err != nil {
+	e, err := s.agent.EmbedMessage(message, r.Response)
+	if err != nil {
+		return "", fmt.Errorf("failed to embed message: %w", err)
+	}
+
+	if err = s.db.StoreConversation(userID, r, e); err != nil {
 		return "", err
 	}
 

@@ -100,16 +100,16 @@ func (_c *MockPersistence_GetUserHistory_Call) RunAndReturn(run func(id string) 
 }
 
 // StoreConversation provides a mock function for the type MockPersistence
-func (_mock *MockPersistence) StoreConversation(userID string, history *datamodels.HistoryContext) error {
-	ret := _mock.Called(userID, history)
+func (_mock *MockPersistence) StoreConversation(userID string, history *datamodels.HistoryContext, embedding []float32) error {
+	ret := _mock.Called(userID, history, embedding)
 
 	if len(ret) == 0 {
 		panic("no return value specified for StoreConversation")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string, *datamodels.HistoryContext) error); ok {
-		r0 = returnFunc(userID, history)
+	if returnFunc, ok := ret.Get(0).(func(string, *datamodels.HistoryContext, []float32) error); ok {
+		r0 = returnFunc(userID, history, embedding)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -124,11 +124,12 @@ type MockPersistence_StoreConversation_Call struct {
 // StoreConversation is a helper method to define mock.On call
 //   - userID string
 //   - history *datamodels.HistoryContext
-func (_e *MockPersistence_Expecter) StoreConversation(userID interface{}, history interface{}) *MockPersistence_StoreConversation_Call {
-	return &MockPersistence_StoreConversation_Call{Call: _e.mock.On("StoreConversation", userID, history)}
+//   - embedding []float32
+func (_e *MockPersistence_Expecter) StoreConversation(userID interface{}, history interface{}, embedding interface{}) *MockPersistence_StoreConversation_Call {
+	return &MockPersistence_StoreConversation_Call{Call: _e.mock.On("StoreConversation", userID, history, embedding)}
 }
 
-func (_c *MockPersistence_StoreConversation_Call) Run(run func(userID string, history *datamodels.HistoryContext)) *MockPersistence_StoreConversation_Call {
+func (_c *MockPersistence_StoreConversation_Call) Run(run func(userID string, history *datamodels.HistoryContext, embedding []float32)) *MockPersistence_StoreConversation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 string
 		if args[0] != nil {
@@ -138,9 +139,14 @@ func (_c *MockPersistence_StoreConversation_Call) Run(run func(userID string, hi
 		if args[1] != nil {
 			arg1 = args[1].(*datamodels.HistoryContext)
 		}
+		var arg2 []float32
+		if args[2] != nil {
+			arg2 = args[2].([]float32)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -151,7 +157,7 @@ func (_c *MockPersistence_StoreConversation_Call) Return(err error) *MockPersist
 	return _c
 }
 
-func (_c *MockPersistence_StoreConversation_Call) RunAndReturn(run func(userID string, history *datamodels.HistoryContext) error) *MockPersistence_StoreConversation_Call {
+func (_c *MockPersistence_StoreConversation_Call) RunAndReturn(run func(userID string, history *datamodels.HistoryContext, embedding []float32) error) *MockPersistence_StoreConversation_Call {
 	_c.Call.Return(run)
 	return _c
 }

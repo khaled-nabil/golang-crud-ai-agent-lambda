@@ -3,6 +3,9 @@ package db
 import (
 	"ai-agent/model/datamodels"
 	"fmt"
+	"time"
+
+	"github.com/pgvector/pgvector-go"
 )
 
 var (
@@ -10,23 +13,57 @@ var (
 )
 
 const (
-	chatTable = "chat"
+	chatTable           = "chat"
+	genaiEmbeddingTable = "documents_gemini"
 )
 
-func (r *Repository) StoreConversation(id string, h *datamodels.HistoryContext) error {
-	query := `INSERT INTO $1 (user_id, message, response) VALUES ($2, $3, $4)`
+func (r *Repository) StoreConversation(userID string, h *datamodels.HistoryContext, embedding []float32) error {
+	tx, err := r.agent.Begin(r.ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(r.ctx)
 
-	_, err := r.agent.Exec(r.ctx, query, chatTable, id, h.UserInput, h.Response)
+	var chatID string
+	var createdAt time.Time
 
-	return fmt.Errorf("failed to store conversation: %w", err)
+	chatQuery := fmt.Sprintf(`
+        INSERT INTO %s (user_id, message, response, created_at) 
+        VALUES ($1, $2, $3, NOW()) 
+        RETURNING id, created_at
+    `, chatTable)
+
+	err = tx.
+	QueryRow(r.ctx, chatQuery, userID, h.UserInput, h.Response).
+	Scan(&chatID, &createdAt)
+	if err != nil {
+		return fmt.Errorf("failed to insert chat: %w", err)
+	}
+
+	vec := pgvector.NewVector(embedding)
+
+	embedQuery := fmt.Sprintf(`
+        INSERT INTO %s (chat_id, user_id, embedding, created_at) 
+        VALUES ($1, $2, $3, $4)
+    `, genaiEmbeddingTable)
+
+	_, err = tx.Exec(r.ctx, embedQuery, chatID, userID, vec, createdAt)
+	if err != nil {
+		return fmt.Errorf("failed to insert embedding: %w", err)
+	}
+
+	return tx.Commit(r.ctx)
 }
 
 func (r *Repository) GetUserHistory(id string) ([]datamodels.Chat, error) {
-	query := `SELECT id, user_id, message, response, created_at FROM $1 WHERE user_id = $2 ORDER BY created_at DESC LIMIT $3`
+	query := fmt.Sprintf(`
+	SELECT id, user_id, message, response, created_at FROM %s 
+	WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2
+	`, chatTable)
 
 	var chats []datamodels.Chat
 
-	q, err := r.agent.Query(r.ctx, query, chatTable, id, limit)
+	q, err := r.agent.Query(r.ctx, query, id, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query chat: %w", err)
 	}
