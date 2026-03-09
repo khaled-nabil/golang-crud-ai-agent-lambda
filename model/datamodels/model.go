@@ -10,7 +10,7 @@ type (
 		UserInput string `json:"user"`
 		Response  string `json:"response"`
 	}
-	
+
 	AppConfig struct {
 		GeminiAPIKey string `json:"GEMINI_API_KEY"`
 		ModelID      string `json:"MODEL_ID"`

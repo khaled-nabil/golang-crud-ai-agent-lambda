@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"os"
 
+	"ai-agent/model/datamodels"
+
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
-	"ai-agent/model/datamodels"
 )
 
 func New() (*datamodels.AppConfig, error) {

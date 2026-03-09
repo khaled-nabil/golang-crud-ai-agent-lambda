@@ -33,9 +33,6 @@ func main() {
 		appConfig.DBName,
 	)
 
-	log.Printf("Connecting to database at %s:%d/%s...", appConfig.DBHost, appConfig.DBPort, appConfig.DBName)
-	log.Printf("Using migrations from: %s", migrationsPath)
-
 	m, err := migrate.New(
 		fmt.Sprintf("file://%s", migrationsPath),
 		dsn,
