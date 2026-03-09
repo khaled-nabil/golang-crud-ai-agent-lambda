@@ -4,14 +4,14 @@
 package server
 
 import (
+	"ai-agent/adapters/gemini"
+	"ai-agent/adapters/secrets"
 	"ai-agent/controller/agentcontroller"
 	"ai-agent/controller/healthcontroller"
 	"ai-agent/model/datamodels"
+	"ai-agent/model/errormodels"
 	"ai-agent/model/servicemodels"
-	"ai-agent/pkg/dynamodbpkg"
-	"ai-agent/pkg/geminipkg"
-	"ai-agent/pkg/secretspkg"
-	"ai-agent/repositories/chatpersistance"
+	"ai-agent/repositories/db"
 	"ai-agent/router"
 	"ai-agent/service/aiagent"
 	"ai-agent/usecase/errors"
@@ -28,21 +28,20 @@ func NewGinEngine() *gin.Engine {
 }
 
 var ProviderSet = wire.NewSet(
-	wire.Bind(new(datamodels.Gemini), new(*geminipkg.Gemini)),
-	wire.Bind(new(datamodels.DynamoDB), new(*dynamodbpkg.DynamoDB)),
+	wire.Bind(new(datamodels.Gemini), new(*gemini.Gemini)),
 	wire.Bind(new(servicemodels.AgentService), new(*aiagent.Service)),
-	wire.Bind(new(servicemodels.AgentRepo), new(*chatpersistance.Repo)),
+	wire.Bind(new(servicemodels.Persistence), new(*db.Repository)),
+	wire.Bind(new(errormodels.Errors), new(*errors.ErrorHandler)),
 	NewGinEngine,
 	New,
-	errors.New,
 	healthcontroller.New,
 	agentcontroller.New,
 	router.New,
-	geminipkg.New,
-	secretspkg.New,
+	gemini.New,
+	secrets.New,
 	aiagent.New,
-	dynamodbpkg.New,
-	chatpersistance.New,
+	db.New,
+	errors.New,
 )
 
 func InitializeServer() (*Server, error) {

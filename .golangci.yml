@@ -1,159 +1,137 @@
-run:
-  timeout: 5m
+version: "2"
 linters:
   enable:
-    - govet
-    - revive
-    - staticcheck
-    - goimports
-    - unconvert
-    - typecheck
-    - unused
-    - gosimple
-    - ineffassign
     - bodyclose
-    - stylecheck
+    - errorlint
     - goconst
     - gocritic
     - gocyclo
-    - gofmt
-    - errorlint
+    - revive
+    - staticcheck
+    - unconvert
     - unparam
-linters-settings:
-  goimports:
-    local-prefixes: github.com/khaled.kadoura/golang-crud-ai-agentcontroller-lambda
-  revive:
+  settings:
+    revive:
+      rules:
+        - name: package-comments
+          disabled: true
+        - name: dot-imports
+          disabled: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
     rules:
-      - name: package-comments
-        disabled: true
-      - name: dot-imports
-        disabled: true
-issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - funlen
-        - goconst
-        - gosec
-        - noctx
-        - testpackage
-        - paralleltest
-        - tparallel
-        - aiat
-        - exhaustruct
-        - forcetypeassert
-        - nlreturn
-        - wrapcheck
-        - wsl
-        - dupl
-        - nestif
-        - godot
-        - godox
-        - gochecknoglobals
-        - gochecknoinits
-        - gocognit
-        - gocyclo
-        - goerr113
-        - gomnd
-        - lll
-        - nakedret
-        - testableexamples
-        - unparam
-        - whitespace
-        - ginkgo-focus
-        - ginkgo-no-focused-describe
-        - ginkgo-prefer-async-matchers
-        - ginkgo-suite-with-name
-        - gomega-must-not-be-called-in-init
-        - gomega-return-value-must-be-checked
-        - gomega-wrong-matcher
-        - promlinter
-        - reassign
-        - rowserrcheck
-        - sqlclosecheck
-        - wastedassign
-        - execinquery
-        - makezero
-        - nilerr
-        - contextcheck
-        - errchkjson
-        - errname
-        - errorlint
-        - exhaustive
-        - exportloopref
-        - gosec
-        - interfacebloat
-        - musttag
-        - nonamedreturns
-        - nosprintfhostport
-        - predeclared
-        - tenv
-        - thelper
-        - usestdlibvars
-        - zerologlint
-        - containedctx
-        - cyclop
-        - decorder
-        - depguard
-        - dogsled
-        - dupimport
-        - durationcheck
-        - errcheck
-        - exhaustive
-        - exhaustivestruct
-        - forbidigo
-        - funlen
-        - gci
-        - gocheckcompilerdirectives
-        - goconst
-        - gocritic
-        - gocyclo
-        - godot
-        - gofumpt
-        - goheader
-        - goimports
-        - gomoddirectives
-        - gomodguard
-        - goprintffuncname
-        - gosec
-        - grouper
-        - importas
-        - interfacebloat
-        - ireturn
-        - lll
-        - loggercheck
-        - maintidx
-        - maligned
-        - misspell
-        - nakedret
-        - nestif
-        - nilnil
-        - nlreturn
-        - noctx
-        - nolintlint
-        - nonamedreturns
-        - nosprintfhostport
-        - paralleltest
-        - predeclared
-        - promlinter
-        - protogetter
-        - reassign
-        - revive
-        - rowserrcheck
-        - sqlclosecheck
-        - stylecheck
-        - tagliatelle
-        - tenv
-        - testableexamples
-        - testpackage
-        - thelper
-        - tparallel
-        - unconvert
-        - unparam
-        - unused
-        - usestdlibvars
-        - wastedassign
-        - whitespace
-        - wrapcheck
-        - wsl
-        - zerologlint
+      - linters:
+          - aiat
+          - containedctx
+          - contextcheck
+          - cyclop
+          - decorder
+          - depguard
+          - dogsled
+          - dupimport
+          - dupl
+          - durationcheck
+          - err113
+          - errcheck
+          - errchkjson
+          - errname
+          - errorlint
+          - execinquery
+          - exhaustive
+          - exhaustivestruct
+          - exhaustruct
+          - exportloopref
+          - forbidigo
+          - forcetypeassert
+          - funlen
+          - ginkgo-focus
+          - ginkgo-no-focused-describe
+          - ginkgo-prefer-async-matchers
+          - ginkgo-suite-with-name
+          - gocheckcompilerdirectives
+          - gochecknoglobals
+          - gochecknoinits
+          - gocognit
+          - goconst
+          - gocritic
+          - gocyclo
+          - godot
+          - godox
+          - goheader
+          - gomega-must-not-be-called-in-init
+          - gomega-return-value-must-be-checked
+          - gomega-wrong-matcher
+          - gomoddirectives
+          - gomodguard
+          - goprintffuncname
+          - gosec
+          - grouper
+          - importas
+          - interfacebloat
+          - ireturn
+          - lll
+          - loggercheck
+          - maintidx
+          - makezero
+          - maligned
+          - misspell
+          - mnd
+          - musttag
+          - nakedret
+          - nestif
+          - nilerr
+          - nilnil
+          - nlreturn
+          - noctx
+          - nolintlint
+          - nonamedreturns
+          - nosprintfhostport
+          - paralleltest
+          - predeclared
+          - promlinter
+          - protogetter
+          - reassign
+          - revive
+          - rowserrcheck
+          - sqlclosecheck
+          - staticcheck
+          - tagliatelle
+          - tenv
+          - testableexamples
+          - testpackage
+          - thelper
+          - tparallel
+          - unconvert
+          - unparam
+          - unused
+          - usestdlibvars
+          - wastedassign
+          - whitespace
+          - wrapcheck
+          - wsl
+          - zerologlint
+        path: _test\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/khaled.kadoura/golang-crud-ai-agentcontroller-lambda
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+      - _test\.go

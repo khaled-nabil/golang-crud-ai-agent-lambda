@@ -3,9 +3,10 @@ package agentcontroller
 import (
 	"ai-agent/model/servicemodels"
 	mockservicemodels "ai-agent/model/servicemodels/mocks"
+	"ai-agent/usecase/errors"
 	"bytes"
 	"encoding/json"
-	"errors"
+
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -18,7 +19,8 @@ func TestSendMessage(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	mockAgentService := mockservicemodels.NewMockAgentService(t)
-	controller := New(mockAgentService)
+	errorsS := errors.New()
+	controller := New(mockAgentService, errorsS)
 
 	t.Run("When request body is invalid, return bad request", func(t *testing.T) {
 		router := gin.New()
@@ -66,8 +68,7 @@ func TestSendMessage(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 
-		expectedErr := errors.New("service error")
-		mockAgentService.On("SendMessageWithHistory", "test-user", "Hello").Return("", expectedErr).Once()
+		mockAgentService.On("SendMessageWithHistory", "test-user", "Hello").Return("", errorsS).Once()
 
 		router.ServeHTTP(w, req)
 

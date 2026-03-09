@@ -20,11 +20,6 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-resource "aws_iam_role_policy_attachment" "dynamodb_access" {
-  role       = aws_iam_role.ai_lambda_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
-}
-
 resource "aws_iam_role_policy_attachment" "cloudwatch_logging" {
   role       = aws_iam_role.ai_lambda_role.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
@@ -40,7 +35,6 @@ resource "null_resource" "build_binary" {
   }
 }
 
-## ARCHIVE FILE
 data "archive_file" "ai_lambda_archive" {
   depends_on = [null_resource.build_binary]
 
@@ -58,6 +52,10 @@ resource "aws_lambda_function" "ai_lambda_function" {
   runtime          = var.runtime
   memory_size      = var.memory_size
 
+  layers = [
+    "arn:aws:lambda:${var.aws_region}:753240598075:layer:LambdaAdapterLayerX86:23"
+  ]
+
   tags = {
     Environment = var.environment
     Application = var.app_name
@@ -65,11 +63,9 @@ resource "aws_lambda_function" "ai_lambda_function" {
 
   environment {
     variables = {
-      SECRETS_ARN            = var.secrets_arn
-      GIN_MODE               = var.gin_mode
-      DYNAMODB_TABLE_NAME    = var.db_table_name
-      DYNAMODB_USER_ID_KEY   = var.db_user_id_key
-      DYNAMODB_TIMESTAMP_KEY = var.db_timestamp_key
+      SECRETS_ARN  = var.secrets_arn
+      GIN_MODE     = var.gin_mode
+      AWS_LWA_PORT = "8080"
     }
   }
 }
@@ -92,7 +88,6 @@ resource "aws_lambda_function_url" "url" {
   }
 }
 
-## SECRET MANAGER
 data "aws_iam_policy_document" "secrets_manager_read" {
   statement {
     actions   = ["secretsmanager:GetSecretValue"]

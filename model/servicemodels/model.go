@@ -7,9 +7,9 @@ type (
 		SendMessageWithHistory(userID, message string) (string, error)
 	}
 
-	AgentRepo interface {
-		StoreConversation(userID string, history *datamodels.HistoryContext) error
-		GetUserHistory(id string) ([]datamodels.HistoryContext, error)
+	Persistence interface {
+		StoreConversation(userID string, history *datamodels.HistoryContext, embedding []float32) error
+		GetUserHistory(id string) ([]datamodels.Chat, error)
 	}
 
 	RequestBody struct {

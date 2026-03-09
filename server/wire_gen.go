@@ -7,16 +7,17 @@
 package server
 
 import (
+	"ai-agent/adapters/gemini"
+	"ai-agent/adapters/secrets"
 	"ai-agent/controller/agentcontroller"
 	"ai-agent/controller/healthcontroller"
 	"ai-agent/model/datamodels"
+	"ai-agent/model/errormodels"
 	"ai-agent/model/servicemodels"
-	"ai-agent/pkg/dynamodbpkg"
-	"ai-agent/pkg/geminipkg"
-	"ai-agent/pkg/secretspkg"
-	"ai-agent/repositories/chatpersistance"
+	"ai-agent/repositories/db"
 	"ai-agent/router"
 	"ai-agent/service/aiagent"
+	"ai-agent/usecase/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 	"os"
@@ -27,21 +28,21 @@ import (
 func InitializeServer() (*Server, error) {
 	engine := NewGinEngine()
 	controller := healthcontroller.New()
-	appConfig, err := secretspkg.New()
+	appConfig, err := secrets.New()
 	if err != nil {
 		return nil, err
 	}
-	gemini, err := geminipkg.New(appConfig)
+	geminiGemini, err := gemini.New(appConfig)
 	if err != nil {
 		return nil, err
 	}
-	dynamoDB, err := dynamodbpkg.New()
+	repository, err := db.New(appConfig)
 	if err != nil {
 		return nil, err
 	}
-	repo := chatpersistance.New(dynamoDB)
-	service := aiagent.New(gemini, repo)
-	agentcontrollerController := agentcontroller.New(service)
+	service := aiagent.New(geminiGemini, repository)
+	errorHandler := errors.New()
+	agentcontrollerController := agentcontroller.New(service, errorHandler)
 	routerRouter := router.New(engine, controller, agentcontrollerController)
 	server := New(engine, routerRouter)
 	return server, nil
@@ -55,6 +56,6 @@ func NewGinEngine() *gin.Engine {
 	return gin.New()
 }
 
-var ProviderSet = wire.NewSet(wire.Bind(new(datamodels.Gemini), new(*geminipkg.Gemini)), wire.Bind(new(datamodels.DynamoDB), new(*dynamodbpkg.DynamoDB)), wire.Bind(new(servicemodels.AgentService), new(*aiagent.Service)), wire.Bind(new(servicemodels.AgentRepo), new(*chatpersistance.Repo)), NewGinEngine,
-	New, healthcontroller.New, agentcontroller.New, router.New, geminipkg.New, secretspkg.New, aiagent.New, dynamodbpkg.New, chatpersistance.New,
+var ProviderSet = wire.NewSet(wire.Bind(new(datamodels.Gemini), new(*gemini.Gemini)), wire.Bind(new(servicemodels.AgentService), new(*aiagent.Service)), wire.Bind(new(servicemodels.Persistence), new(*db.Repository)), wire.Bind(new(errormodels.Errors), new(*errors.ErrorHandler)), NewGinEngine,
+	New, healthcontroller.New, agentcontroller.New, router.New, gemini.New, secrets.New, aiagent.New, db.New, errors.New,
 )

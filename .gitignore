@@ -40,13 +40,15 @@ env.json
 *.tmp
 *.temp
 
+# Environment files (credentials)
+.env
+
 # Terraform files
 /.tf/.build/*
 .terraform
 tfplan.plan
 *.tfstate*
 .terraform.lock.hcl
-volume/cache/machine.json
-volume/cache/server.test.pem
-volume/cache/server.test.pem.crt
-volume/cache/server.test.pem.key
+
+volume/
+cmd/__debug_**

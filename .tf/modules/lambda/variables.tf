@@ -57,17 +57,7 @@ variable "gin_mode" {
   default     = "release"
 }
 
-variable "db_table_name" {
-  description = "The name of the DynamoDB table."
-  type        = string
-}
-
-variable "db_user_id_key" {
-  description = "The user ID key for the DynamoDB table."
-  type        = string
-}
-
-variable "db_timestamp_key" {
-  description = "The timestamp key for the DynamoDB table."
+variable "aws_region" {
+  description = "The AWS region where resources will be deployed."
   type        = string
 }

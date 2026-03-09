@@ -12,7 +12,7 @@ import (
 
 func TestSendMessageWithHistory(t *testing.T) {
 	mockAgent := mockdatamodels.NewMockGemini(t)
-	mockDb := mockservicemodels.NewMockAgentRepo(t)
+	mockDb := mockservicemodels.NewMockPersistence(t)
 
 	s := New(mockAgent, mockDb)
 
