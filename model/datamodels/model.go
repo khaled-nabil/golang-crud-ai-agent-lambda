@@ -3,7 +3,7 @@ package datamodels
 type (
 	Gemini interface {
 		Chat(userInput string, h []HistoryContext) (*HistoryContext, error)
-		EmbedMessage(message, response string) ([]float32, error)
+		EmbedMessage(text string) ([]float32, error)
 	}
 
 	HistoryContext struct {

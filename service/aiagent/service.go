@@ -18,22 +18,33 @@ func New(agent datamodels.Gemini, db servicemodels.Persistence) *Service {
 }
 
 func (s *Service) SendMessageWithHistory(userID, message string) (string, error) {
-	h, err := s.db.GetUserHistory(userID)
+	embeddedInput, err := s.agent.EmbedMessage(message)
 	if err != nil {
-		return "", fmt.Errorf("failed to retrieve user history: %w", err)
+		return "", fmt.Errorf("failed to embed user input: %w", err)
 	}
 
-	r, err := s.agent.Chat(message, datamodels.ChatListToHistoryContextList(h))
+	similarDocuments, err := s.db.GetUserSimilarDocuments(userID, embeddedInput)
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve user similar documents: %w", err)
+	}
+
+	r, err := s.agent.Chat(message, datamodels.ChatListToHistoryContextList(similarDocuments))
 	if err != nil {
 		return "", fmt.Errorf("failed to send message to user: %w", err)
 	}
 
-	e, err := s.agent.EmbedMessage(message, r.Response)
+	/*
+	 * Current we embed user's input and AI response together
+	 * TODO: assess if this should be improved, some alternatives
+	 * - embed seperately, and later insert into two vector columns
+	 * - use LLM to pull insights and important content from messages and insert as one
+	 */
+	embeddedConversation, err := s.agent.EmbedMessage(fmt.Sprintf("User: %s\nAssistant: %s", message, r.Response))
 	if err != nil {
-		return "", fmt.Errorf("failed to embed message: %w", err)
+		return "", fmt.Errorf("failed to embed conversation: %w", err)
 	}
 
-	if err = s.db.StoreConversation(userID, r, e); err != nil {
+	if err = s.db.StoreConversation(userID, r, embeddedConversation); err != nil {
 		return "", err
 	}
 

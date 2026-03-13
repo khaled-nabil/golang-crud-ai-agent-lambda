@@ -16,7 +16,7 @@ type Gemini struct {
 var (
 	temperature   = float32(0.2)
 	maxTokens     = int32(1024)
-	system        = "You are a helpful AI assistant."
+	system        = "You are a helpful AI assistant. Use the history context when possible to answer questions."
 	embeddingSize = int32(1536)
 )
 
@@ -98,19 +98,13 @@ func (g *Gemini) Chat(userInput string, history []datamodels.HistoryContext) (*d
 	}, nil
 }
 
-func (g *Gemini) EmbedMessage(m, r string) ([]float32, error) {
-	/* current we embed user's input and AI response together
-	 * TODO assess if this should be improved, some alternatives
-	 * - embed seperately, and later insert into two vector columns
-	 * - use LLM to pull insights and important content from messages and insert as one
-	 */
-	turnText := fmt.Sprintf("User: %s\nAssistant: %s", m, r)
-
-	content := genai.NewContentFromText(turnText, genai.RoleUser)
-
-	result, err := g.client.Models.EmbedContent(context.Background(),
+func (g *Gemini) EmbedMessage(t string) ([]float32, error) {
+	result, err := g.client.Models.EmbedContent(
+		context.Background(),
 		emddingModel,
-		[]*genai.Content{content},
+		[]*genai.Content{
+			genai.NewContentFromText(t, genai.RoleUser),
+		},
 		&genai.EmbedContentConfig{OutputDimensionality: &embeddingSize},
 	)
 	if err != nil {
@@ -128,7 +122,7 @@ func transformHistoryToGeminiContent(h []datamodels.HistoryContext) []*genai.Con
 	for _, item := range h {
 		if item.UserInput != "" {
 			history = append(history, &genai.Content{
-				Role: "user",
+				Role: genai.RoleUser,
 				Parts: []*genai.Part{
 					{
 						Text: item.UserInput,
@@ -138,7 +132,7 @@ func transformHistoryToGeminiContent(h []datamodels.HistoryContext) []*genai.Con
 		}
 		if item.Response != "" {
 			history = append(history, &genai.Content{
-				Role: "model",
+				Role: genai.RoleModel,
 				Parts: []*genai.Part{
 					{
 						Text: item.Response,
