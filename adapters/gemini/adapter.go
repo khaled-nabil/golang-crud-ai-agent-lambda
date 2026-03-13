@@ -2,6 +2,7 @@ package gemini
 
 import (
 	"ai-agent/model/datamodels"
+	"bytes"
 	"context"
 	"fmt"
 
@@ -21,7 +22,9 @@ var (
 )
 
 const (
-	emddingModel = "gemini-embedding-001"
+	embeddingModel             = "gemini-embedding-001"
+	embeddingQeueryTaskType    = "RETRIEVAL_QUERY"
+	embeddingRetrievalTaskType = "RETRIEVAL_DOCUMENT"
 )
 
 func New(cfg *datamodels.AppConfig) (*Gemini, error) {
@@ -87,25 +90,54 @@ func (g *Gemini) Chat(userInput string, history []datamodels.HistoryContext) (*d
 		return nil, fmt.Errorf("no response received")
 	}
 
-	tr := ""
+	var tr bytes.Buffer
+
 	for _, part := range resp.Candidates[0].Content.Parts {
-		tr += part.Text
+		_, err = tr.WriteString(part.Text)
+		if err != nil {
+			return nil, fmt.Errorf("failed to write response: %w", err)
+		}
 	}
 
 	return &datamodels.HistoryContext{
 		UserInput: userInput,
-		Response:  tr,
+		Response:  tr.String(),
 	}, nil
 }
 
 func (g *Gemini) EmbedMessage(t string) ([]float32, error) {
 	result, err := g.client.Models.EmbedContent(
 		context.Background(),
-		emddingModel,
+		embeddingModel,
 		[]*genai.Content{
 			genai.NewContentFromText(t, genai.RoleUser),
 		},
-		&genai.EmbedContentConfig{OutputDimensionality: &embeddingSize},
+		&genai.EmbedContentConfig{
+			OutputDimensionality: &embeddingSize,
+			TaskType:             embeddingQeueryTaskType,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to embed message: %w", err)
+	}
+
+	embedding := result.Embeddings[0]
+
+	return embedding.Values, nil
+}
+
+func (g *Gemini) EmbedConverastion(h *datamodels.HistoryContext) ([]float32, error) {
+	result, err := g.client.Models.EmbedContent(
+		context.Background(),
+		embeddingModel,
+		[]*genai.Content{
+			genai.NewContentFromText(h.UserInput, genai.RoleUser),
+			genai.NewContentFromText(h.Response, genai.RoleUser),
+		},
+		&genai.EmbedContentConfig{
+			OutputDimensionality: &embeddingSize,
+			TaskType:             embeddingRetrievalTaskType,
+		},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to embed message: %w", err)
@@ -121,24 +153,10 @@ func transformHistoryToGeminiContent(h []datamodels.HistoryContext) []*genai.Con
 
 	for _, item := range h {
 		if item.UserInput != "" {
-			history = append(history, &genai.Content{
-				Role: genai.RoleUser,
-				Parts: []*genai.Part{
-					{
-						Text: item.UserInput,
-					},
-				},
-			})
+			history = append(history, genai.NewContentFromText(item.UserInput, genai.RoleUser))
 		}
 		if item.Response != "" {
-			history = append(history, &genai.Content{
-				Role: genai.RoleModel,
-				Parts: []*genai.Part{
-					{
-						Text: item.Response,
-					},
-				},
-			})
+			history = append(history, genai.NewContentFromText(item.Response, genai.RoleModel))
 		}
 	}
 	return history

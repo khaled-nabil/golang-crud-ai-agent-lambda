@@ -39,7 +39,7 @@ func (s *Service) SendMessageWithHistory(userID, message string) (string, error)
 	 * - embed seperately, and later insert into two vector columns
 	 * - use LLM to pull insights and important content from messages and insert as one
 	 */
-	embeddedConversation, err := s.agent.EmbedMessage(fmt.Sprintf("User: %s\nAssistant: %s", message, r.Response))
+	embeddedConversation, err := s.agent.EmbedConverastion(r)
 	if err != nil {
 		return "", fmt.Errorf("failed to embed conversation: %w", err)
 	}
