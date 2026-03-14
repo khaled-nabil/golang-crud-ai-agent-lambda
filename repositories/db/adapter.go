@@ -89,3 +89,48 @@ func (r *Repository) GetUserHistory(id string) ([]datamodels.Chat, error) {
 
 	return chats, nil
 }
+
+func (r *Repository) GetUserSimilarDocuments(userID string, embedding []float32) ([]datamodels.Chat, error) {
+	vec := pgvector.NewVector(embedding)
+
+	query := fmt.Sprintf(`
+        SELECT 
+            e.chat_id,
+			e.user_id,
+            c.message,
+            c.response,
+            e.created_at,
+            (1 - (e.embedding <=> $2)) * 
+            EXP(-EXTRACT(EPOCH FROM (NOW() - e.created_at))/86400 * 0.1) AS relevance_score
+        FROM %s e
+        JOIN %s c ON e.chat_id = c.id
+        WHERE e.user_id = $1 
+        AND 1 - (e.embedding <=> $2) >= 0.5
+        ORDER BY relevance_score DESC
+        LIMIT $3`, genaiEmbeddingTable, chatTable)
+
+	rows, err := r.agent.Query(r.ctx, query, userID, vec, limit)
+	if err != nil {
+		return nil, fmt.Errorf("vector search failed: %w", err)
+	}
+	defer rows.Close()
+
+	var history []datamodels.Chat
+	for rows.Next() {
+		var h datamodels.Chat
+		var _relevance_score float32
+		if err := rows.Scan(
+			&h.ID,
+			&h.UserID,
+			&h.Message,
+			&h.Response,
+			&h.CreateAt,
+			&_relevance_score,
+		); err != nil {
+			return nil, fmt.Errorf("scan failed: %w", err)
+		}
+		history = append(history, h)
+	}
+
+	return history, rows.Err()
+}

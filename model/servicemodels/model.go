@@ -10,6 +10,7 @@ type (
 	Persistence interface {
 		StoreConversation(userID string, history *datamodels.HistoryContext, embedding []float32) error
 		GetUserHistory(id string) ([]datamodels.Chat, error)
+		GetUserSimilarDocuments(userID string, embedding []float32) ([]datamodels.Chat, error)
 	}
 
 	RequestBody struct {
