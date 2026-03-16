@@ -4,6 +4,42 @@ This project is a serverless AI agent built with Go and deployed on AWS Lambda.
 It uses the Gin framework for routing and integrates with Google's Gemini AI model.
 The application is designed to be a conversational AI, with plans to implement a sophisticated RAG (Retrieval-Augmented Generation) system.
 
+
+## Diagram
+
+```mermaid
+graph TD
+    %% Nodes
+    Client["Client"]
+    Gateway["Gateway"]
+    OAuth["0Auth Service"]
+    Secrets["Secrets Manager"]
+    AIKB["AI Knowledge Base"]
+    
+    subgraph Localstack_AWS ["Localstack/AWS"]
+        Gateway
+        OAuth
+        Secrets
+        
+        subgraph Lambda ["Lambda"]
+            AIKB
+        end
+        
+        subgraph Database_Group ["Postgres DB"]
+            DB_Box["Postgres DB"]
+            ChatHistory["Chat History"]
+            Embeddings["Embeddings"]
+            DomainModel["Domain Model"]
+        end
+    end
+
+    %% Connections
+    Client --> Gateway
+    Gateway --> OAuth
+    Gateway --> AIKB
+    AIKB --> Secrets
+    AIKB --> DB_Box
+```
 ## Technical Features
 
 - Serverless architecture using AWS Lambda.

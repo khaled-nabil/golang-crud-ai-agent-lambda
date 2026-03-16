@@ -2,6 +2,7 @@ package gemini
 
 import (
 	"ai-agent/model/datamodels"
+	"bytes"
 	"context"
 	"fmt"
 
@@ -16,12 +17,14 @@ type Gemini struct {
 var (
 	temperature   = float32(0.2)
 	maxTokens     = int32(1024)
-	system        = "You are a helpful AI assistant."
+	system        = "You are a helpful AI assistant. Use the history context when possible to answer questions."
 	embeddingSize = int32(1536)
 )
 
 const (
-	emddingModel = "gemini-embedding-001"
+	embeddingModel             = "gemini-embedding-001"
+	embeddingQeueryTaskType    = "RETRIEVAL_QUERY"
+	embeddingRetrievalTaskType = "RETRIEVAL_DOCUMENT"
 )
 
 func New(cfg *datamodels.AppConfig) (*Gemini, error) {
@@ -87,31 +90,54 @@ func (g *Gemini) Chat(userInput string, history []datamodels.HistoryContext) (*d
 		return nil, fmt.Errorf("no response received")
 	}
 
-	tr := ""
+	var tr bytes.Buffer
+
 	for _, part := range resp.Candidates[0].Content.Parts {
-		tr += part.Text
+		_, err = tr.WriteString(part.Text)
+		if err != nil {
+			return nil, fmt.Errorf("failed to write response: %w", err)
+		}
 	}
 
 	return &datamodels.HistoryContext{
 		UserInput: userInput,
-		Response:  tr,
+		Response:  tr.String(),
 	}, nil
 }
 
-func (g *Gemini) EmbedMessage(m, r string) ([]float32, error) {
-	/* current we embed user's input and AI response together
-	 * TODO assess if this should be improved, some alternatives
-	 * - embed seperately, and later insert into two vector columns
-	 * - use LLM to pull insights and important content from messages and insert as one
-	 */
-	turnText := fmt.Sprintf("User: %s\nAssistant: %s", m, r)
+func (g *Gemini) EmbedMessage(t string) ([]float32, error) {
+	result, err := g.client.Models.EmbedContent(
+		context.Background(),
+		embeddingModel,
+		[]*genai.Content{
+			genai.NewContentFromText(t, genai.RoleUser),
+		},
+		&genai.EmbedContentConfig{
+			OutputDimensionality: &embeddingSize,
+			TaskType:             embeddingQeueryTaskType,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to embed message: %w", err)
+	}
 
-	content := genai.NewContentFromText(turnText, genai.RoleUser)
+	embedding := result.Embeddings[0]
 
-	result, err := g.client.Models.EmbedContent(context.Background(),
-		emddingModel,
-		[]*genai.Content{content},
-		&genai.EmbedContentConfig{OutputDimensionality: &embeddingSize},
+	return embedding.Values, nil
+}
+
+func (g *Gemini) EmbedConverastion(h *datamodels.HistoryContext) ([]float32, error) {
+	result, err := g.client.Models.EmbedContent(
+		context.Background(),
+		embeddingModel,
+		[]*genai.Content{
+			genai.NewContentFromText(h.UserInput, genai.RoleUser),
+			genai.NewContentFromText(h.Response, genai.RoleUser),
+		},
+		&genai.EmbedContentConfig{
+			OutputDimensionality: &embeddingSize,
+			TaskType:             embeddingRetrievalTaskType,
+		},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to embed message: %w", err)
@@ -127,24 +153,10 @@ func transformHistoryToGeminiContent(h []datamodels.HistoryContext) []*genai.Con
 
 	for _, item := range h {
 		if item.UserInput != "" {
-			history = append(history, &genai.Content{
-				Role: "user",
-				Parts: []*genai.Part{
-					{
-						Text: item.UserInput,
-					},
-				},
-			})
+			history = append(history, genai.NewContentFromText(item.UserInput, genai.RoleUser))
 		}
 		if item.Response != "" {
-			history = append(history, &genai.Content{
-				Role: "model",
-				Parts: []*genai.Part{
-					{
-						Text: item.Response,
-					},
-				},
-			})
+			history = append(history, genai.NewContentFromText(item.Response, genai.RoleModel))
 		}
 	}
 	return history
