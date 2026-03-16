@@ -7,6 +7,11 @@ type (
 		EmbedConverastion(h *HistoryContext) ([]float32, error)
 	}
 
+	EmbeddingModel interface {
+		EmbedSearchQuery(query string) ([]float64, error)
+		EmbedSearchDocument(text string) ([]float64, error)
+	}
+
 	HistoryContext struct {
 		UserInput string `json:"user"`
 		Response  string `json:"response"`

@@ -8,6 +8,7 @@ package server
 
 import (
 	"ai-agent/adapters/gemini"
+	"ai-agent/adapters/ollama"
 	"ai-agent/adapters/secrets"
 	"ai-agent/controller/agentcontroller"
 	"ai-agent/controller/healthcontroller"
@@ -56,6 +57,6 @@ func NewGinEngine() *gin.Engine {
 	return gin.New()
 }
 
-var ProviderSet = wire.NewSet(wire.Bind(new(datamodels.Gemini), new(*gemini.Gemini)), wire.Bind(new(servicemodels.AgentService), new(*aiagent.Service)), wire.Bind(new(servicemodels.Persistence), new(*db.Repository)), wire.Bind(new(errormodels.Errors), new(*errors.ErrorHandler)), NewGinEngine,
-	New, healthcontroller.New, agentcontroller.New, router.New, gemini.New, secrets.New, aiagent.New, db.New, errors.New,
+var ProviderSet = wire.NewSet(wire.Bind(new(datamodels.Gemini), new(*gemini.Gemini)), wire.Bind(new(datamodels.EmbeddingModel), new(*ollama.Ollama)), wire.Bind(new(servicemodels.AgentService), new(*aiagent.Service)), wire.Bind(new(servicemodels.Persistence), new(*db.Repository)), wire.Bind(new(errormodels.Errors), new(*errors.ErrorHandler)), NewGinEngine,
+	New, healthcontroller.New, agentcontroller.New, router.New, gemini.New, ollama.New, secrets.New, aiagent.New, db.New, errors.New,
 )
