@@ -1,3 +1,1 @@
 DROP TABLE IF EXISTS domain;
-
-DROP INDEX IF EXISTS idx_domain_id;
