@@ -1,7 +1,7 @@
-package errors
+package usecase
 
 import (
-	"ai-agent/model/errormodels"
+	"ai-agent/entity/errormodels"
 	"net/http"
 )
 
@@ -10,7 +10,7 @@ type (
 	}
 )
 
-func New() *ErrorHandler {
+func NewErrorHandler() *ErrorHandler {
 	return &ErrorHandler{}
 }
 

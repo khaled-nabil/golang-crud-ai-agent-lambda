@@ -1,9 +1,11 @@
 package db
 
 import (
-	"ai-agent/model/datamodels"
+	"ai-agent/entity"
 	"fmt"
 	"time"
+
+	"ai-agent/repositories/db/repo_dto"
 
 	"github.com/pgvector/pgvector-go"
 )
@@ -17,7 +19,7 @@ const (
 	genaiEmbeddingTable = "documents_gemini"
 )
 
-func (r *Repository) StoreConversation(userID string, h *datamodels.HistoryContext, embedding []float32) error {
+func (r *PostgresRepo) StoreConversation(userID string, h *entity.ChatHistoryEntity, embedding []float32) error {
 	tx, err := r.agent.Begin(r.ctx)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
@@ -57,13 +59,13 @@ func (r *Repository) StoreConversation(userID string, h *datamodels.HistoryConte
 	return tx.Commit(r.ctx)
 }
 
-func (r *Repository) GetUserHistory(id string) ([]datamodels.Chat, error) {
+func (r *PostgresRepo) GetUserHistory(id string) ([]entity.ChatHistoryEntity, error) {
 	query := fmt.Sprintf(`
 	SELECT id, user_id, message, response, created_at FROM %s 
 	WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2
 	`, chatTable)
 
-	var chats []datamodels.Chat
+	var chats []repo_dto.ChatDTO
 
 	q, err := r.agent.Query(r.ctx, query, id, limit)
 	if err != nil {
@@ -72,7 +74,7 @@ func (r *Repository) GetUserHistory(id string) ([]datamodels.Chat, error) {
 	defer q.Close()
 
 	for q.Next() {
-		var chat datamodels.Chat
+		var chat repo_dto.ChatDTO
 		if err := q.Scan(
 			&chat.ID,
 			&chat.UserID,
@@ -87,10 +89,10 @@ func (r *Repository) GetUserHistory(id string) ([]datamodels.Chat, error) {
 		chats = append(chats, chat)
 	}
 
-	return chats, nil
+	return repo_dto.ChatListToHistoryContextList(chats), nil
 }
 
-func (r *Repository) GetUserSimilarDocuments(userID string, embedding []float32) ([]datamodels.Chat, error) {
+func (r *PostgresRepo) GetUserSimilarDocuments(userID string, embedding []float32) ([]entity.ChatHistoryEntity, error) {
 	vec := pgvector.NewVector(embedding)
 
 	query := fmt.Sprintf(`
@@ -115,9 +117,9 @@ func (r *Repository) GetUserSimilarDocuments(userID string, embedding []float32)
 	}
 	defer rows.Close()
 
-	var history []datamodels.Chat
+	var history []repo_dto.ChatDTO
 	for rows.Next() {
-		var h datamodels.Chat
+		var h repo_dto.ChatDTO
 		var _relevance_score float32
 		if err := rows.Scan(
 			&h.ID,
@@ -132,5 +134,5 @@ func (r *Repository) GetUserSimilarDocuments(userID string, embedding []float32)
 		history = append(history, h)
 	}
 
-	return history, rows.Err()
+	return repo_dto.ChatListToHistoryContextList(history), rows.Err()
 }

@@ -1,34 +1,33 @@
-package aiagent
+package usecase
 
 import (
-	"ai-agent/model/datamodels"
-	"ai-agent/model/servicemodels"
+	"ai-agent/interface"
 	"fmt"
 )
 
 type (
-	Service struct {
-		agent datamodels.Gemini
-		db    servicemodels.Persistence
+	AIAgentUsecase struct {
+		agent _interface.AgentAdapter
+		cr    _interface.ChatRepo
 	}
 )
 
-func New(agent datamodels.Gemini, db servicemodels.Persistence) *Service {
-	return &Service{agent, db}
+func NewAIAgentUsecase(agent _interface.AgentAdapter, cr _interface.ChatRepo) *AIAgentUsecase {
+	return &AIAgentUsecase{agent, cr}
 }
 
-func (s *Service) SendMessageWithHistory(userID, message string) (string, error) {
+func (s *AIAgentUsecase) SendMessageWithHistory(userID, message string) (string, error) {
 	embeddedInput, err := s.agent.EmbedMessage(message)
 	if err != nil {
 		return "", fmt.Errorf("failed to embed user input: %w", err)
 	}
 
-	similarDocuments, err := s.db.GetUserSimilarDocuments(userID, embeddedInput)
+	similarDocuments, err := s.cr.GetUserSimilarDocuments(userID, embeddedInput)
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve user similar documents: %w", err)
 	}
 
-	r, err := s.agent.Chat(message, datamodels.ChatListToHistoryContextList(similarDocuments))
+	r, err := s.agent.Chat(message, similarDocuments)
 	if err != nil {
 		return "", fmt.Errorf("failed to send message to user: %w", err)
 	}
@@ -44,7 +43,7 @@ func (s *Service) SendMessageWithHistory(userID, message string) (string, error)
 		return "", fmt.Errorf("failed to embed conversation: %w", err)
 	}
 
-	if err = s.db.StoreConversation(userID, r, embeddedConversation); err != nil {
+	if err = s.cr.StoreConversation(userID, r, embeddedConversation); err != nil {
 		return "", err
 	}
 

@@ -1,7 +1,8 @@
 package gemini
 
 import (
-	"ai-agent/model/datamodels"
+	"ai-agent/adapters/secrets"
+	"ai-agent/entity"
 	"bytes"
 	"context"
 	"fmt"
@@ -9,7 +10,7 @@ import (
 	"google.golang.org/genai"
 )
 
-type Gemini struct {
+type GeminiAdapter struct {
 	model  string
 	client *genai.Client
 }
@@ -27,7 +28,7 @@ const (
 	embeddingRetrievalTaskType = "RETRIEVAL_DOCUMENT"
 )
 
-func New(cfg *datamodels.AppConfig) (*Gemini, error) {
+func NewGeminiAdapter(cfg *secrets.AppConfig) (*GeminiAdapter, error) {
 	apiKey := cfg.GeminiAPIKey
 	modelName := cfg.ModelID
 
@@ -36,13 +37,13 @@ func New(cfg *datamodels.AppConfig) (*Gemini, error) {
 		return nil, fmt.Errorf("failed to create genai client: %w", err)
 	}
 
-	return &Gemini{
+	return &GeminiAdapter{
 		client: c,
 		model:  modelName,
 	}, nil
 }
 
-func (g *Gemini) createChat(history []*genai.Content) (*genai.Chat, *context.Context, error) {
+func (g *GeminiAdapter) createChat(history []*genai.Content) (*genai.Chat, *context.Context, error) {
 	ctx := context.Background()
 	s, e := g.client.Chats.Create(ctx, g.model, &genai.GenerateContentConfig{
 		Temperature:      &temperature,
@@ -65,7 +66,7 @@ func (g *Gemini) createChat(history []*genai.Content) (*genai.Chat, *context.Con
 	return s, &ctx, nil
 }
 
-func (g *Gemini) Chat(userInput string, history []datamodels.HistoryContext) (*datamodels.HistoryContext, error) {
+func (g *GeminiAdapter) Chat(userInput string, history []entity.ChatHistoryEntity) (*entity.ChatHistoryEntity, error) {
 	if userInput == "" {
 		return nil, fmt.Errorf("user input or response is empty")
 	}
@@ -99,13 +100,13 @@ func (g *Gemini) Chat(userInput string, history []datamodels.HistoryContext) (*d
 		}
 	}
 
-	return &datamodels.HistoryContext{
+	return &entity.ChatHistoryEntity{
 		UserInput: userInput,
 		Response:  tr.String(),
 	}, nil
 }
 
-func (g *Gemini) EmbedMessage(t string) ([]float32, error) {
+func (g *GeminiAdapter) EmbedMessage(t string) ([]float32, error) {
 	result, err := g.client.Models.EmbedContent(
 		context.Background(),
 		embeddingModel,
@@ -126,7 +127,7 @@ func (g *Gemini) EmbedMessage(t string) ([]float32, error) {
 	return embedding.Values, nil
 }
 
-func (g *Gemini) EmbedConverastion(h *datamodels.HistoryContext) ([]float32, error) {
+func (g *GeminiAdapter) EmbedConverastion(h *entity.ChatHistoryEntity) ([]float32, error) {
 	result, err := g.client.Models.EmbedContent(
 		context.Background(),
 		embeddingModel,
@@ -148,7 +149,7 @@ func (g *Gemini) EmbedConverastion(h *datamodels.HistoryContext) ([]float32, err
 	return embedding.Values, nil
 }
 
-func transformHistoryToGeminiContent(h []datamodels.HistoryContext) []*genai.Content {
+func transformHistoryToGeminiContent(h []entity.ChatHistoryEntity) []*genai.Content {
 	var history []*genai.Content
 
 	for _, item := range h {

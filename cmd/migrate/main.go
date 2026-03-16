@@ -14,7 +14,7 @@ import (
 
 func main() {
 	log.Println("Loading configuration...")
-	appConfig, err := secrets.New()
+	appConfig, err := secrets.NewSecretsManager()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}

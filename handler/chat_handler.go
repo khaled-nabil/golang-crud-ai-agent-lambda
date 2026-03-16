@@ -1,30 +1,29 @@
-package agentcontroller
+package handler
 
 import (
-	"ai-agent/model/dtomodels"
-	"ai-agent/model/errormodels"
-	"ai-agent/model/servicemodels"
+	"ai-agent/handler/handler_dto"
+	"ai-agent/interface"
+	"log"
 	"net/http"
 
-	"log"
-
+	"ai-agent/entity/errormodels"
 	"github.com/gin-gonic/gin"
 )
 
-type Controller struct {
-	ai       servicemodels.AgentService
+type ChatHandler struct {
+	ai       _interface.AgentUsecase
 	errorMgr errormodels.Errors
 }
 
-func New(ai servicemodels.AgentService, e errormodels.Errors) *Controller {
-	return &Controller{
+func NewChatHandler(ai _interface.AgentUsecase, e errormodels.Errors) *ChatHandler {
+	return &ChatHandler{
 		ai:       ai,
 		errorMgr: e,
 	}
 }
 
-func (ctrl *Controller) SendMessage(c *gin.Context) {
-	var rq servicemodels.RequestBody
+func (ctrl *ChatHandler) ChatWithHistory(c *gin.Context) {
+	var rq handler_dto.ChatRequest
 	if err := c.BindJSON(&rq); err != nil {
 		ctrl.handleError(c, errormodels.ErrBadRequest, err.Error())
 		return
@@ -41,12 +40,12 @@ func (ctrl *Controller) SendMessage(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, dtomodels.GenAIResponse{
+	c.JSON(http.StatusCreated, handler_dto.ChatResponse{
 		Message: resp,
 	})
 }
 
-func (ctrl *Controller) handleError(c *gin.Context, code errormodels.ErrorCodes, debugMsg string) {
+func (ctrl *ChatHandler) handleError(c *gin.Context, code errormodels.ErrorCodes, debugMsg string) {
 	log.Printf("Error [%s]: %s", code, debugMsg)
 
 	formatted := ctrl.errorMgr.GetFormattedError(code)
