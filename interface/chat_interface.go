@@ -6,7 +6,7 @@ import (
 
 type (
 	ChatRepo interface {
-		StoreConversation(userID string, history *entity.ChatHistoryEntity, embedding []float32) error
+		StoreConversation(userID string, history *entity.ChatHistoryEntity, embedding []float32) (*entity.ChatHistoryEntity, error)
 		GetUserHistory(id string) ([]entity.ChatHistoryEntity, error)
 		GetUserSimilarDocuments(userID string, embedding []float32) ([]entity.ChatHistoryEntity, error)
 	}

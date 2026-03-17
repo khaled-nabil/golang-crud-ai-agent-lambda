@@ -4,7 +4,6 @@ import (
 	"ai-agent/entity"
 	"context"
 	"fmt"
-	"time"
 
 	"ai-agent/repositories/db/repo_dto"
 
@@ -19,8 +18,7 @@ type (
 )
 
 const (
-	chatTable           = "chat"
-	genaiEmbeddingTable = "documents_gemini"
+	chatTable            = "chat"
 	chatQueryLimit int32 = 10
 )
 
@@ -28,46 +26,25 @@ func NewChatRepository(db *PostgresRepo) *ChatRepository {
 	return &ChatRepository{db.agent}
 }
 
-func (r *ChatRepository) StoreConversation(userID string, h *entity.ChatHistoryEntity, embedding []float32) error {
+func (r *ChatRepository) StoreConversation(userID string, h *entity.ChatHistoryEntity, embedding []float32) (*entity.ChatHistoryEntity, error) {
 	ctx := context.Background()
 
-	tx, err := r.agent.Begin(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
-	}
-	defer func() {
-		_ = tx.Rollback(ctx)
-	}()
-
-	var chatID string
-	var createdAt time.Time
+	var chat repo_dto.ChatDTO
 
 	chatQuery := fmt.Sprintf(`
-        INSERT INTO %s (user_id, message, response, created_at) 
-        VALUES ($1, $2, $3, NOW()) 
-        RETURNING id, created_at
+        INSERT INTO %s (user_id, message, response, embedding, created_at) 
+        VALUES ($1, $2, $3, $4, NOW()) 
+        RETURNING id, user_id, message, response, created_at
     `, chatTable)
 
-	err = tx.
-		QueryRow(ctx, chatQuery, userID, h.UserInput, h.Response).
-		Scan(&chatID, &createdAt)
+	err := r.agent.
+		QueryRow(ctx, chatQuery, userID, h.UserInput, h.Response, pgvector.NewVector(embedding)).
+		Scan(&chat.ID, &chat.UserID, &chat.Message, &chat.Response, &chat.CreateAt)
 	if err != nil {
-		return fmt.Errorf("failed to insert chat: %w", err)
+		return nil, fmt.Errorf("failed to insert chat: %w", err)
 	}
 
-	vec := pgvector.NewVector(embedding)
-
-	embedQuery := fmt.Sprintf(`
-        INSERT INTO %s (chat_id, user_id, embedding, created_at) 
-        VALUES ($1, $2, $3, $4)
-    `, genaiEmbeddingTable)
-
-	_, err = tx.Exec(ctx, embedQuery, chatID, userID, vec, createdAt)
-	if err != nil {
-		return fmt.Errorf("failed to insert embedding: %w", err)
-	}
-
-	return tx.Commit(ctx)
+	return chat.ChatToHistoryContext(), nil
 }
 
 func (r *ChatRepository) GetUserHistory(id string) ([]entity.ChatHistoryEntity, error) {
@@ -112,19 +89,17 @@ func (r *ChatRepository) GetUserSimilarDocuments(userID string, embedding []floa
 
 	query := fmt.Sprintf(`
         SELECT 
-            e.chat_id,
-			e.user_id,
-            c.message,
-            c.response,
-            e.created_at,
-            (1 - (e.embedding <=> $2)) * 
-            EXP(-EXTRACT(EPOCH FROM (NOW() - e.created_at))/86400 * 0.1) AS relevance_score
-        FROM %s e
-        JOIN %s c ON e.chat_id = c.id
-        WHERE e.user_id = $1 
-        AND 1 - (e.embedding <=> $2) >= 0.5
-        ORDER BY relevance_score DESC
-        LIMIT $3`, genaiEmbeddingTable, chatTable)
+            id
+			user_id,
+            message,
+            response,
+            (embedding <=> $2) AS vector_distance,
+			created_at
+        FROM %s 
+        WHERE user_id = $1 
+        AND vector_distance <= 0.5
+        ORDER BY vector_distance ASC
+        LIMIT $3`, chatTable)
 
 	rows, err := r.agent.Query(ctx, query, userID, vec, chatQueryLimit)
 	if err != nil {
@@ -135,14 +110,14 @@ func (r *ChatRepository) GetUserSimilarDocuments(userID string, embedding []floa
 	var history []repo_dto.ChatDTO
 	for rows.Next() {
 		var h repo_dto.ChatDTO
-		var _relevance_score float32
+		var _vector_distance float32
 		if err := rows.Scan(
 			&h.ID,
 			&h.UserID,
 			&h.Message,
 			&h.Response,
+			&_vector_distance,
 			&h.CreateAt,
-			&_relevance_score,
 		); err != nil {
 			return nil, fmt.Errorf("scan failed: %w", err)
 		}

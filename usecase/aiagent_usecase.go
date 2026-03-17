@@ -43,7 +43,8 @@ func (s *AIAgentUsecase) SendMessageWithHistory(userID, message string) (string,
 		return "", fmt.Errorf("failed to embed conversation: %w", err)
 	}
 
-	if err = s.cr.StoreConversation(userID, r, embeddedConversation); err != nil {
+	_, err = s.cr.StoreConversation(userID, r, embeddedConversation)
+	if err != nil {
 		return "", err
 	}
 
