@@ -2,11 +2,12 @@ package handler
 
 import (
 	"ai-agent/handler/handler_dto"
-	"ai-agent/interface"
+	_interface "ai-agent/interface"
 	"log"
 	"net/http"
 
 	"ai-agent/entity/errormodels"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -22,16 +23,16 @@ func NewBookHandler(uc _interface.BookUsecase, e errormodels.Errors) *BookHandle
 	}
 }
 
-func (ctrl *BookHandler) CreateBook(c *gin.Context) {
+func (b *BookHandler) CreateBook(c *gin.Context) {
 	var rq handler_dto.BookRequest
 	if err := c.BindJSON(&rq); err != nil {
-		ctrl.handleError(c, errormodels.ErrBadRequest, err.Error())
+		b.handleError(c, errormodels.ErrBadRequest, err.Error())
 		return
 	}
 
-	err := ctrl.usecase.Insert(rq.ToBookEntity())
+	err := b.usecase.Insert(rq.ToBookEntity())
 	if err != nil {
-		ctrl.handleError(c, errormodels.ErrGeneric, err.Error())
+		b.handleError(c, errormodels.ErrGeneric, err.Error())
 		return
 	}
 
@@ -48,10 +49,26 @@ func (ctrl *BookHandler) CreateBook(c *gin.Context) {
 	})
 }
 
-func (ctrl *BookHandler) handleError(c *gin.Context, code errormodels.ErrorCodes, debugMsg string) {
+func (b *BookHandler) GetBookRecommendations(c *gin.Context) {
+	prompt := c.Query("prompt")
+	if prompt == "" {
+		b.handleError(c, errormodels.ErrBadRequest, "prompt is required", "Get Parameter \"prompt\" is required")
+		return
+	}
+
+	books, err := b.usecase.GetBookRecommendations(prompt)
+	if err != nil {
+		b.handleError(c, errormodels.ErrGeneric, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, books)
+}
+
+func (ctrl *BookHandler) handleError(c *gin.Context, code errormodels.ErrorCodes, debugMsg string, userMessage ...string) {
 	log.Printf("Error [%s]: %s", code, debugMsg)
 
-	formatted := ctrl.errorMgr.GetFormattedError(code)
+	formatted := ctrl.errorMgr.GetFormattedError(code, userMessage...)
 
 	c.AbortWithStatusJSON(formatted.Code, gin.H{
 		"message": formatted.Message,

@@ -69,7 +69,7 @@ func (b *BookRepository) InsertBookIfNotExists(book *entity.BookEntity) error {
 		return err
 	}
 
-	bookID := getConsistentUUID(book.Title)
+	bookID := getConsistentUUID(fmt.Sprintf("%s-%d-%d", book.Title, book.PageCount, book.Year))
 	embedding := pgvector.NewVector(book.Embedding)
 
 	insertQuery := fmt.Sprintf(`
@@ -91,6 +91,36 @@ func (b *BookRepository) InsertBookIfNotExists(book *entity.BookEntity) error {
 	}
 
 	return tx.Commit(ctx)
+}
+
+func (b *BookRepository) SearchForRelevantBook(embedding []float32) ([]entity.BookEntity, error) {
+	ctx := context.Background()
+	vec := pgvector.NewVector(embedding)
+
+	query := fmt.Sprintf(`
+		SELECT id, title, subtitle, description, thumbnail, published_year, rating_count, average_rating, num_pages 
+		FROM %s 
+		ORDER BY embedding <-> $1 
+		LIMIT 30
+	`, bookTable)
+
+	rows, err := b.agent.Query(ctx, query, vec)
+	if err != nil {
+		return nil, fmt.Errorf("query relevant books: %w", err)
+	}
+	defer rows.Close()
+
+	var books []entity.BookEntity
+	for rows.Next() {
+		var book entity.BookEntity
+		err := rows.Scan(&book.ID, &book.Title, &book.Subtitle, &book.Description, &book.Thumb, &book.Year, &book.RatingCount, &book.AverageRating, &book.PageCount)
+		if err != nil {
+			return nil, fmt.Errorf("scan book: %w", err)
+		}
+		books = append(books, book)
+	}
+
+	return books, nil
 }
 
 func (b *BookRepository) insertAuthors(ctx context.Context, tx pgx.Tx, authors []repo_dto.BookAuthorDTO) error {

@@ -35,5 +35,6 @@ func (r *Router) Route() {
 
 	v1group.
 		Group("/book").
-		POST("", r.bh.CreateBook)
+		POST("", r.bh.CreateBook).
+		GET("/recommendations", r.bh.GetBookRecommendations)
 }

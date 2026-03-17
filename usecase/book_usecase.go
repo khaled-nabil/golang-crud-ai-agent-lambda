@@ -27,3 +27,12 @@ func (b *BookUsecase) Insert(book *entity.BookEntity) error {
 
 	return b.cr.InsertBookIfNotExists(book)
 }
+
+func (b *BookUsecase) GetBookRecommendations(prompt string) ([]entity.BookEntity, error) {
+	embedding, err := b.em.EmbedSearchQuery(prompt)
+	if err != nil {
+		return nil, err
+	}
+
+	return b.cr.SearchForRelevantBook(embedding)
+}
