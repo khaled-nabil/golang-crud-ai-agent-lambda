@@ -18,7 +18,6 @@ type GeminiAdapter struct {
 var (
 	temperature   = float32(0.2)
 	maxTokens     = int32(1024)
-	system        = "You are a helpful AI assistant. Use the history context when possible to answer questions."
 	embeddingSize = int32(1536)
 )
 
@@ -43,7 +42,7 @@ func NewGeminiAdapter(cfg *secrets.AppConfig) (*GeminiAdapter, error) {
 	}, nil
 }
 
-func (g *GeminiAdapter) createChat(history []*genai.Content) (*genai.Chat, *context.Context, error) {
+func (g *GeminiAdapter) createChat(systemPrompt string, history []*genai.Content) (*genai.Chat, *context.Context, error) {
 	ctx := context.Background()
 	s, e := g.client.Chats.Create(ctx, g.model, &genai.GenerateContentConfig{
 		Temperature:      &temperature,
@@ -53,27 +52,27 @@ func (g *GeminiAdapter) createChat(history []*genai.Content) (*genai.Chat, *cont
 			Role: genai.RoleModel,
 			Parts: []*genai.Part{
 				{
-					Text: system,
+					Text: systemPrompt,
 				},
 			},
 		},
 	}, history)
 
 	if e != nil {
-		return nil, &ctx, fmt.Errorf("failed to create chat session: %w", e)
+		return nil, &ctx, fmt.Errorf("genai create chat session: %w", e)
 	}
 
 	return s, &ctx, nil
 }
 
-func (g *GeminiAdapter) Chat(userInput string, history []entity.ChatHistoryEntity) (*entity.ChatHistoryEntity, error) {
+func (g *GeminiAdapter) Chat(userInput string, systemPrompt string, history []entity.ChatHistoryEntity) (*entity.ChatHistoryEntity, error) {
 	if userInput == "" {
 		return nil, fmt.Errorf("user input or response is empty")
 	}
 
 	h := transformHistoryToGeminiContent(history)
 
-	c, ctx, err := g.createChat(h)
+	c, ctx, err := g.createChat(systemPrompt, h)
 	if err != nil {
 		return nil, err
 	}
@@ -84,11 +83,11 @@ func (g *GeminiAdapter) Chat(userInput string, history []entity.ChatHistoryEntit
 
 	resp, err := c.Send(*ctx, uip)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send message: %w", err)
+		return nil, fmt.Errorf("genai send message: %w", err)
 	}
 
 	if len(resp.Candidates) == 0 {
-		return nil, fmt.Errorf("no response received")
+		return nil, fmt.Errorf("genai no response received")
 	}
 
 	var tr bytes.Buffer
@@ -96,7 +95,7 @@ func (g *GeminiAdapter) Chat(userInput string, history []entity.ChatHistoryEntit
 	for _, part := range resp.Candidates[0].Content.Parts {
 		_, err = tr.WriteString(part.Text)
 		if err != nil {
-			return nil, fmt.Errorf("failed to write response: %w", err)
+			return nil, fmt.Errorf("genai write response: %w", err)
 		}
 	}
 
@@ -119,7 +118,7 @@ func (g *GeminiAdapter) EmbedMessage(t string) ([]float32, error) {
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to embed message: %w", err)
+		return nil, fmt.Errorf("genai embed message: %w", err)
 	}
 
 	embedding := result.Embeddings[0]
@@ -141,7 +140,7 @@ func (g *GeminiAdapter) EmbedConverastion(h *entity.ChatHistoryEntity) ([]float3
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to embed message: %w", err)
+		return nil, fmt.Errorf("genai embed conversation: %w", err)
 	}
 
 	embedding := result.Embeddings[0]

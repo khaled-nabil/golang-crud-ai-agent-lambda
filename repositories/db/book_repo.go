@@ -100,7 +100,7 @@ func (b *BookRepository) SearchForRelevantBook(embedding []float32) ([]entity.Bo
 	query := fmt.Sprintf(`
 		SELECT id, title, subtitle, description, thumbnail, published_year, rating_count, average_rating, num_pages 
 		FROM %s 
-		ORDER BY embedding <-> $1 
+		ORDER BY embedding <=> $1 
 		LIMIT 30
 	`, bookTable)
 

@@ -34,5 +34,10 @@ func (b *BookUsecase) GetBookRecommendations(prompt string) ([]entity.BookEntity
 		return nil, err
 	}
 
-	return b.cr.SearchForRelevantBook(embedding)
+	books, err := b.cr.SearchForRelevantBook(embedding)
+	if err != nil {
+		return nil, err
+	}
+
+	return books, nil
 }

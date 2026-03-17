@@ -12,35 +12,47 @@ import (
 
 type ChatHandler struct {
 	ai       _interface.AgentUsecase
+	du       _interface.DomainUsecase
 	errorMgr errormodels.Errors
 }
 
-func NewChatHandler(ai _interface.AgentUsecase, e errormodels.Errors) *ChatHandler {
+const (
+	chatDomain = "chat"
+)
+
+func NewChatHandler(ai _interface.AgentUsecase, du _interface.DomainUsecase, e errormodels.Errors) *ChatHandler {
 	return &ChatHandler{
 		ai:       ai,
+		du:       du,
 		errorMgr: e,
 	}
 }
 
-func (ctrl *ChatHandler) ChatWithHistory(c *gin.Context) {
+func (c *ChatHandler) ChatWithHistory(ctx *gin.Context) {
 	var rq handler_dto.ChatRequest
-	if err := c.BindJSON(&rq); err != nil {
-		ctrl.handleError(c, errormodels.ErrBadRequest, err.Error())
+	if err := ctx.BindJSON(&rq); err != nil {
+		c.handleError(ctx, errormodels.ErrBadRequest, err.Error())
 		return
 	}
 
 	if rq.UserID == "" {
-		ctrl.handleError(c, errormodels.ErrUnauthorized, "user not authenticated")
+		c.handleError(ctx, errormodels.ErrUnauthorized, "user not authenticated")
 		return
 	}
 
-	resp, err := ctrl.ai.SendMessageWithHistory(rq.UserID, rq.Message)
+	si, err := c.du.GetInstructions(chatDomain)
 	if err != nil {
-		ctrl.handleError(c, errormodels.ErrGeneric, err.Error())
+		c.handleError(ctx, errormodels.ErrGeneric, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusCreated, handler_dto.ChatResponse{
+	resp, err := c.ai.SendMessageWithHistory(rq.UserID, rq.Message, si)
+	if err != nil {
+		c.handleError(ctx, errormodels.ErrGeneric, err.Error())
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, handler_dto.ChatResponse{
 		Message: resp,
 	})
 }

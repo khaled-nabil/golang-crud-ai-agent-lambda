@@ -16,7 +16,7 @@ func NewAIAgentUsecase(agent _interface.AgentAdapter, cr _interface.ChatRepo) *A
 	return &AIAgentUsecase{agent, cr}
 }
 
-func (s *AIAgentUsecase) SendMessageWithHistory(userID, message string) (string, error) {
+func (s *AIAgentUsecase) SendMessageWithHistory(userID, message, sysIns string) (string, error) {
 	embeddedInput, err := s.agent.EmbedMessage(message)
 	if err != nil {
 		return "", fmt.Errorf("failed to embed user input: %w", err)
@@ -27,7 +27,7 @@ func (s *AIAgentUsecase) SendMessageWithHistory(userID, message string) (string,
 		return "", fmt.Errorf("failed to retrieve user similar documents: %w", err)
 	}
 
-	r, err := s.agent.Chat(message, similarDocuments)
+	r, err := s.agent.Chat(message, sysIns, similarDocuments)
 	if err != nil {
 		return "", fmt.Errorf("failed to send message to user: %w", err)
 	}
