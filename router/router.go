@@ -10,14 +10,16 @@ type Router struct {
 	Gin *gin.Engine
 	hh  *handler.HealthHandler
 	ch  *handler.ChatHandler
+	bh  *handler.BookHandler
 }
 
 func New(
 	gin *gin.Engine,
-	hctrl *handler.HealthHandler,
-	actrl *handler.ChatHandler,
+	hh *handler.HealthHandler,
+	ch *handler.ChatHandler,
+	bh *handler.BookHandler,
 ) *Router {
-	return &Router{gin, hctrl, actrl}
+	return &Router{gin, hh, ch, bh}
 }
 
 func (r *Router) Route() {
@@ -30,4 +32,8 @@ func (r *Router) Route() {
 	v1group.
 		Group("/chat").
 		POST("", r.ch.ChatWithHistory)
+
+	v1group.
+		Group("/book").
+		POST("", r.bh.CreateBook)
 }

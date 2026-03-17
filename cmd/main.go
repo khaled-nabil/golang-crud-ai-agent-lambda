@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"ai-agent/adapters/gemini"
+	"ai-agent/adapters/ollama"
 	"ai-agent/adapters/secrets"
 	"ai-agent/handler"
 	"ai-agent/repositories/db"
@@ -29,18 +30,28 @@ func main() {
 		log.Fatalf("Failed to initialize Gemini: %v", err)
 	}
 
+	ollamaClient, errr := ollama.NewOllama()
+	if errr != nil {
+		log.Fatalf("Failed to initialize Ollama: %v", errr)
+	}
+
 	repository, err := db.NewPostgresRepo(appConfig)
 	if err != nil {
 		log.Fatalf("Failed to initialize DB: %v", err)
 	}
 
-	service := usecase.NewAIAgentUsecase(geminiClient, repository)
+	chatRepo := db.NewChatRepository(repository)
+	bookRepo := db.NewBookRepository(repository)
+
+	agentUsecase := usecase.NewAIAgentUsecase(geminiClient, chatRepo)
+	bookUsecase := usecase.NewBookUsecase(ollamaClient, bookRepo)
 	errorHandler := usecase.NewErrorHandler()
 
 	hh := handler.NewHealthHandler()
-	ch := handler.NewChatHandler(service, errorHandler)
+	ch := handler.NewChatHandler(agentUsecase, errorHandler)
+	bh := handler.NewBookHandler(bookUsecase, errorHandler)
 
-	r := router.New(engine, hh, ch)
+	r := router.New(engine, hh, ch, bh)
 	s := server.New(engine, r)
 
 	if err := s.Run(":8080"); err != nil {

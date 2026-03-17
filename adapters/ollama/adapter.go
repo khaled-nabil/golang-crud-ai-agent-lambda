@@ -8,7 +8,7 @@ import (
 )
 
 type (
-	Ollama struct {
+	OllamaAdapter struct {
 		model  string
 		client *api.Client
 	}
@@ -20,19 +20,19 @@ const (
 	prefixEmbedSearchDocument = "search_document: "
 )
 
-func New() (*Ollama, error) {
+func NewOllama() (*OllamaAdapter, error) {
 	client, err := api.ClientFromEnvironment()
 	if err != nil {
 		return nil, fmt.Errorf("create Ollama client %w", err)
 	}
-
-	return &Ollama{
+	
+	return &OllamaAdapter{
 		model,
 		client,
 	}, nil
 }
 
-func (o *Ollama) EmbedSearchQuery(query string) ([]float64, error) {
+func (o *OllamaAdapter) EmbedSearchQuery(query string) ([]float32, error) {
 	e, err := o.client.Embeddings(context.Background(), &api.EmbeddingRequest{
 		Model:  o.model,
 		Prompt: fmt.Sprintf("%s%s", prefixEmbedSearchQuery, query),
@@ -41,10 +41,10 @@ func (o *Ollama) EmbedSearchQuery(query string) ([]float64, error) {
 		return nil, fmt.Errorf("embedding search query %w", err)
 	}
 
-	return e.Embedding, nil
+	return Float64To32(e.Embedding), nil
 }
 
-func (o *Ollama) EmbedSearchDocument(text string) ([]float64, error) {
+func (o *OllamaAdapter) EmbedSearchDocument(text string) ([]float32, error) {
 	e, err := o.client.Embeddings(context.Background(), &api.EmbeddingRequest{
 		Model:  o.model,
 		Prompt: fmt.Sprintf("%s%s", prefixEmbedSearchDocument, text),
@@ -53,5 +53,13 @@ func (o *Ollama) EmbedSearchDocument(text string) ([]float64, error) {
 		return nil, fmt.Errorf("embedding search query %w", err)
 	}
 
-	return e.Embedding, nil
+	return Float64To32(e.Embedding), nil
+}
+
+func Float64To32(input []float64) []float32 {
+    output := make([]float32, len(input))
+    for i, v := range input {
+        output[i] = float32(v)
+    }
+    return output
 }

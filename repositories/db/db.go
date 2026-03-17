@@ -11,7 +11,6 @@ import (
 type (
 	PostgresRepo struct {
 		agent *pgxpool.Pool
-		ctx   context.Context
 	}
 )
 
@@ -38,7 +37,6 @@ func NewPostgresRepo(config *secrets.AppConfig) (*PostgresRepo, error) {
 
 	return &PostgresRepo{
 		agent: pool,
-		ctx:   ctx,
 	}, nil
 }
 
