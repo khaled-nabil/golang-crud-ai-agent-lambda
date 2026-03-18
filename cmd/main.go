@@ -42,14 +42,16 @@ func main() {
 
 	chatRepo := db.NewChatRepository(repository)
 	bookRepo := db.NewBookRepository(repository)
+	domainRepo := db.NewDomainRepository(repository)
 
 	agentUsecase := usecase.NewAIAgentUsecase(geminiClient, chatRepo)
 	bookUsecase := usecase.NewBookUsecase(ollamaClient, bookRepo)
+	domainUsecase := usecase.NewDomainUsecase(domainRepo)
 	errorHandler := usecase.NewErrorHandler()
 
 	hh := handler.NewHealthHandler()
-	ch := handler.NewChatHandler(agentUsecase, errorHandler)
-	bh := handler.NewBookHandler(bookUsecase, errorHandler)
+	ch := handler.NewChatHandler(agentUsecase, domainUsecase, errorHandler)
+	bh := handler.NewBookHandler(bookUsecase, geminiClient, domainUsecase, errorHandler)
 
 	r := router.New(engine, hh, ch, bh)
 	s := server.New(engine, r)

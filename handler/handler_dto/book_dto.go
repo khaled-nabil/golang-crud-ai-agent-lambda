@@ -18,15 +18,17 @@ type (
 		PagesCount    int      `json:"num_pages"`
 	}
 
-	BookResponse struct {
-		ID            string   `json:"id"`
-		Title         string   `json:"title"`
-		Subtitle      string   `json:"subtitle"`
-		Authors       []string `json:"authors"`
-		Categories    []string `json:"categories"`
-		Description   string   `json:"description"`
-		Year          int16    `json:"year"`
-		AverageRating float32  `json:"average_rating"`
+	BookRecommendation struct {
+		Title   string `json:"title"`
+		Author  string `json:"author"`
+		Genre   string `json:"genre"`
+		Summary string `json:"summary"`
+		Reason  string `json:"reason"`
+	}
+
+	RecommendResponseDTO struct {
+		Description      string               `json:"description"`
+		RecommendedBooks []BookRecommendation `json:"recommended_books"`
 	}
 )
 

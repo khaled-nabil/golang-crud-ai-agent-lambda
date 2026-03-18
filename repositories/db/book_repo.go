@@ -3,6 +3,7 @@ package db
 import (
 	"ai-agent/entity"
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -98,11 +99,20 @@ func (b *BookRepository) SearchForRelevantBook(embedding []float32) ([]entity.Bo
 	vec := pgvector.NewVector(embedding)
 
 	query := fmt.Sprintf(`
-		SELECT id, title, subtitle, description, thumbnail, published_year, rating_count, average_rating, num_pages 
-		FROM %s 
-		ORDER BY embedding <=> $1 
+		SELECT 
+			b.id, b.title, b.subtitle, b.description, b.thumbnail, b.published_year, 
+			b.rating_count, b.average_rating, b.num_pages,
+			jsonb_agg(distinct jsonb_build_object('id', ba.id, 'name', ba.name)) as authors,
+			jsonb_agg(distinct jsonb_build_object('id', bc.id, 'name', bc.name)) as categories
+		FROM %s b
+		LEFT JOIN %s bam ON b.id = bam.book_id
+		LEFT JOIN %s ba ON bam.author_id = ba.id
+		LEFT JOIN %s bcm ON b.id = bcm.book_id
+		LEFT JOIN %s bc ON bcm.category_id = bc.id
+		GROUP BY b.id
+		ORDER BY b.embedding <=> $1
 		LIMIT 30
-	`, bookTable)
+	`, bookTable, bookAuthorMapTable, bookAuthorTable, bookCategoryMapTable, bookCategoryTable)
 
 	rows, err := b.agent.Query(ctx, query, vec)
 	if err != nil {
@@ -113,14 +123,33 @@ func (b *BookRepository) SearchForRelevantBook(embedding []float32) ([]entity.Bo
 	var books []entity.BookEntity
 	for rows.Next() {
 		var book entity.BookEntity
-		err := rows.Scan(&book.ID, &book.Title, &book.Subtitle, &book.Description, &book.Thumb, &book.Year, &book.RatingCount, &book.AverageRating, &book.PageCount)
+		var authorsJSON, categoriesJSON []byte
+
+		err := rows.Scan(
+			&book.ID, &book.Title, &book.Subtitle, &book.Description, &book.Thumb, 
+			&book.Year, &book.RatingCount, &book.AverageRating, &book.PageCount,
+			&authorsJSON, &categoriesJSON,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("scan book: %w", err)
 		}
-		books = append(books, book)
-	}
 
-	return books, nil
+		if len(authorsJSON) > 0 {
+			if err := json.Unmarshal(authorsJSON, &book.Authors); err != nil {
+				return nil, fmt.Errorf("unmarshal authors: %w", err)
+			}
+		}
+
+		if len(categoriesJSON) > 0 {
+			if err := json.Unmarshal(categoriesJSON, &book.Categories); err != nil {
+				return nil, fmt.Errorf("unmarshal categories: %w", err)
+			}
+		}
+
+        books = append(books, book)
+    }
+
+    return books, nil
 }
 
 func (b *BookRepository) insertAuthors(ctx context.Context, tx pgx.Tx, authors []repo_dto.BookAuthorDTO) error {

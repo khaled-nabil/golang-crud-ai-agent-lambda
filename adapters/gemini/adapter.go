@@ -3,9 +3,12 @@ package gemini
 import (
 	"ai-agent/adapters/secrets"
 	"ai-agent/entity"
+	"ai-agent/handler/handler_dto"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
 
 	"google.golang.org/genai"
 )
@@ -148,6 +151,111 @@ func (g *GeminiAdapter) EmbedConverastion(h *entity.ChatHistoryEntity) ([]float3
 	return embedding.Values, nil
 }
 
+func (g *GeminiAdapter) RecommendBookFromList(userPrompt, systemPrompt string, books []entity.BookEntity) (*handler_dto.RecommendResponseDTO, error) {
+	ctx := context.Background()
+	minBooks := int64(1)
+	maxBooks := int64(5)
+
+	c, err := g.client.Chats.Create(ctx, g.model, &genai.GenerateContentConfig{
+		Temperature:      &temperature,
+		ResponseMIMEType: "application/json",
+		MaxOutputTokens:  maxTokens,
+		SystemInstruction: &genai.Content{
+			Role: genai.RoleModel,
+			Parts: []*genai.Part{
+				{
+					Text: systemPrompt,
+				},
+			},
+		},
+		ResponseJsonSchema: &genai.Schema{
+			Type: "object",
+			Properties: map[string]*genai.Schema{
+				"description": {
+					Type:        "string",
+					Description: "Description of the set of books selected and the user's prompt",
+				},
+				"recommended_books": {
+					Type:     "array",
+					MaxItems: &maxBooks,
+					MinItems: &minBooks,
+					Items: &genai.Schema{
+						Type: "object",
+						Properties: map[string]*genai.Schema{
+							"title": {
+								Type:        "string",
+								Description: "title of the book",
+							},
+							"author": {
+								Type:        "string",
+								Description: "author of the book",
+							},
+							"genre": {
+								Type:        "string",
+								Description: "genre of the book",
+							},
+							"summary": {
+								Type:        "string",
+								Description: "summary of the book based on the description",
+							},
+							"reason": {
+								Type:        "string",
+								Description: "The reason this book was selected and how it matches the user's expectations",
+							},
+						},
+					},
+				},
+			},
+		},
+	}, nil)
+	if err != nil {
+		return nil, fmt.Errorf("genai create chat session: %w", err)
+	}
+
+	var contextBuilder strings.Builder
+	_, err = contextBuilder.WriteString("REFERENCE DOCUMENTS:\n")
+	if err != nil {
+		return nil, fmt.Errorf("genai write reference documents: %w", err)
+	}
+	for _, b := range books {
+		_, err = contextBuilder.WriteString(transformBookToPrompt(&b))
+		if err != nil {
+			return nil, fmt.Errorf("genai transform book to prompt: %w", err)
+		}
+	}
+
+	finalPrompt := fmt.Sprintf(
+		"%s\n\nUSER QUESTION: %s\n\nREMINDER: Use ONLY the books listed above for your suggestions.",
+		contextBuilder.String(),
+		userPrompt,
+	)
+
+	resp, err := c.Send(ctx, genai.NewPartFromText(finalPrompt))
+	if err != nil {
+		return nil, fmt.Errorf("genai send message: %w", err)
+	}
+
+	var rawJSON bytes.Buffer
+
+	for _, part := range resp.Candidates[0].Content.Parts {
+		_, err = rawJSON.WriteString(part.Text)
+		if err != nil {
+			return nil, fmt.Errorf("genai write response: %w", err)
+		}
+	}
+
+	if rawJSON.String() == "" {
+		return nil, fmt.Errorf("empty response from model")
+	}
+
+	var recommendation handler_dto.RecommendResponseDTO
+	if err := json.Unmarshal(rawJSON.Bytes(), &recommendation); err != nil {
+		return nil, fmt.Errorf("parsing model response into DTO: %w", err)
+	}
+
+	return &recommendation, nil
+}
+
 func transformHistoryToGeminiContent(h []entity.ChatHistoryEntity) []*genai.Content {
 	var history []*genai.Content
 
@@ -160,4 +268,8 @@ func transformHistoryToGeminiContent(h []entity.ChatHistoryEntity) []*genai.Cont
 		}
 	}
 	return history
+}
+
+func transformBookToPrompt(b *entity.BookEntity) string {
+	return fmt.Sprintf("--- BOOK ID: %d ---\nTitle: %s\nAuthor: %s\nGenre: %s\nSummary: %s\n\n", *b.ID, b.Title, b.GetAuthorNames(), b.GetCategoryNames(), b.Description)
 }

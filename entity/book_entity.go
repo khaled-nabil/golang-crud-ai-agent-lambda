@@ -1,6 +1,10 @@
 package entity
 
-import "github.com/google/uuid"
+import (
+	"strings"
+
+	"github.com/google/uuid"
+)
 
 type (
 	BookEntity struct {
@@ -30,17 +34,17 @@ type (
 )
 
 func (b *BookEntity) GetAuthorNames() string {
-	var names string
+	var names strings.Builder
 	for _, author := range b.Authors {
-		names += author.Name + ", "
+		_, _ = names.WriteString(author.Name + ", ")
 	}
-	return names
+	return names.String()
 }
 
 func (b *BookEntity) GetCategoryNames() string {
-	var names string
+	var names strings.Builder
 	for _, category := range b.Categories {
-		names += category.Name + ", "
+		_, _ = names.WriteString(category.Name + ", ")
 	}
-	return names
+	return names.String()
 }

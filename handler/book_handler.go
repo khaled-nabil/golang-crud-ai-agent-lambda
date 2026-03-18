@@ -12,13 +12,21 @@ import (
 )
 
 type BookHandler struct {
-	usecase  _interface.BookUsecase
+	bu  _interface.BookUsecase
+	au _interface.AgentAdapter
+	du _interface.DomainUsecase
 	errorMgr errormodels.Errors
 }
 
-func NewBookHandler(uc _interface.BookUsecase, e errormodels.Errors) *BookHandler {
+const (
+	BookDomain = "book"
+)
+
+func NewBookHandler(bu _interface.BookUsecase, au _interface.AgentAdapter, du _interface.DomainUsecase, e errormodels.Errors) *BookHandler {
 	return &BookHandler{
-		usecase:  uc,
+		bu:       bu,
+		au:       au,
+		du:       du,
 		errorMgr: e,
 	}
 }
@@ -30,7 +38,7 @@ func (b *BookHandler) CreateBook(c *gin.Context) {
 		return
 	}
 
-	err := b.usecase.Insert(rq.ToBookEntity())
+	err := b.bu.Insert(rq.ToBookEntity())
 	if err != nil {
 		b.handleError(c, errormodels.ErrGeneric, err.Error())
 		return
@@ -56,13 +64,25 @@ func (b *BookHandler) GetBookRecommendations(c *gin.Context) {
 		return
 	}
 
-	books, err := b.usecase.GetBookRecommendations(prompt)
+	books, err := b.bu.GetBookRecommendations(prompt)
 	if err != nil {
 		b.handleError(c, errormodels.ErrGeneric, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, books)
+	sysIns, err := b.du.GetInstructions(BookDomain)
+	if err != nil {
+		b.handleError(c, errormodels.ErrGeneric, err.Error())
+		return
+	}
+
+	recommendations, err := b.au.RecommendBookFromList(prompt, sysIns, books)
+	if err != nil {
+		b.handleError(c, errormodels.ErrGeneric, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, recommendations)
 }
 
 func (ctrl *BookHandler) handleError(c *gin.Context, code errormodels.ErrorCodes, debugMsg string, userMessage ...string) {
