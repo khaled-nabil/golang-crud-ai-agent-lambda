@@ -1,8 +1,26 @@
-# AI Agent Lambda
+# Knowledge Base Conversational AI
 
-This project is a serverless AI agent built with Go and deployed on AWS Lambda.
-It uses the Gin framework for routing and integrates with Google's Gemini AI model.
-The application is designed to be a conversational AI, with plans to implement a sophisticated RAG (Retrieval-Augmented Generation) system.
+This project aims to provide a multi-domain knowledge base for AI agents.
+It works on two angles:
+
+** Conversational AI**
+Contain and maintain user history for conversational AI chat system. It would store user's interactions with the AI to build robust multi-dimentional RAG system. Such system would use LLM to store important user information, to later inject in conversation's context to make better user informed decisons.
+In addition, to embeds past conversations, and inject them into context window based on similarity scoring, this aims to also make the conversation more flowy.
+This is still experimental and needs improvements, as there are multiple ways to inject information and history.
+
+** Knowledge base **
+On top, we would have a knowledge base system, which would be used to store and retrieve information about a specific domain. That would be used to answer questions and generate recommendations from the knowledge base focusing on the user's preferences.
+
+As an example here, we would have a domain of books, where we would store information about books, and use it to answer questions and generate recommendations about books.
+The current collection we're using is provided by [Kaggle as 7k Books](https://www.kaggle.com/datasets/dylanjcastillo/7k-books-with-metadata/data).
+
+The system is build however to be extensible, and we can add more domains to it, such as movies, music, etc.
+
+## Technical Information
+
+This project is a serverless AI agent built with Go and deployed on AWS Lambda using [Lambda Adapter Layer](https://github.com/awslabs/aws-lambda-web-adapter). This elvate the cost of a running server, and moves the pricing the model to per invokation. However, thanks to the `Lambda Adapter Layer`, it can also simply be run as own service in Docker or Kubernetes Cluster.
+
+It uses the Gin framework for routing and integrates with Google's Gemini AI model, but the AI Interface can be extended and integrated with other AI models as well.
 
 
 ## Diagram

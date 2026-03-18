@@ -1,7 +1,7 @@
 package db
 
 import (
-	"ai-agent/model/datamodels"
+	"ai-agent/adapters/secrets"
 	"context"
 	"fmt"
 
@@ -9,13 +9,12 @@ import (
 )
 
 type (
-	Repository struct {
+	PostgresRepo struct {
 		agent *pgxpool.Pool
-		ctx   context.Context
 	}
 )
 
-func New(config *datamodels.AppConfig) (*Repository, error) {
+func NewPostgresRepo(config *secrets.AppConfig) (*PostgresRepo, error) {
 	ctx := context.Background()
 	dsn := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
@@ -36,13 +35,12 @@ func New(config *datamodels.AppConfig) (*Repository, error) {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	return &Repository{
+	return &PostgresRepo{
 		agent: pool,
-		ctx:   ctx,
 	}, nil
 }
 
-func (r *Repository) Close() error {
+func (r *PostgresRepo) Close() error {
 	if r.agent != nil {
 		r.agent.Close()
 	}

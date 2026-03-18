@@ -51,4 +51,4 @@ tfplan.plan
 .terraform.lock.hcl
 
 volume/
-cmd/__debug_**
+__debug_**

@@ -27,5 +27,25 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./postgres/schema.sql:/docker-entrypoint-initdb.d/schema.sql
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_storage:/root/.ollama
+    restart: unless-stopped
+
+  ollama-pull-model:
+    image: curlimages/curl:latest
+    container_name: ollama_pull_model
+    depends_on:
+      - ollama
+    entrypoint: /bin/sh
+    command: >
+      -c "sleep 5;
+      curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"nomic-embed-text\"}'"
+
 volumes:
   pgdata:
+  ollama_storage:
