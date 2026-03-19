@@ -126,7 +126,7 @@ func (b *BookRepository) SearchForRelevantBook(embedding []float32) ([]entity.Bo
 		var authorsJSON, categoriesJSON []byte
 
 		err := rows.Scan(
-			&book.ID, &book.Title, &book.Subtitle, &book.Description, &book.Thumb, 
+			&book.ID, &book.Title, &book.Subtitle, &book.Description, &book.Thumb,
 			&book.Year, &book.RatingCount, &book.AverageRating, &book.PageCount,
 			&authorsJSON, &categoriesJSON,
 		)
@@ -146,10 +146,10 @@ func (b *BookRepository) SearchForRelevantBook(embedding []float32) ([]entity.Bo
 			}
 		}
 
-        books = append(books, book)
-    }
+		books = append(books, book)
+	}
 
-    return books, nil
+	return books, nil
 }
 
 func (b *BookRepository) insertAuthors(ctx context.Context, tx pgx.Tx, authors []repo_dto.BookAuthorDTO) error {

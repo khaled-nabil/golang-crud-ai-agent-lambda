@@ -15,10 +15,10 @@ type (
 )
 
 const (
-	ErrBadRequest     ErrorCodes = "BAD_REQUEST"
-	ErrNotFound       ErrorCodes = "NOT_FOUND"
-	ErrGeneric        ErrorCodes = "GENERIC_ERROR"
-	ErrUnauthorized   ErrorCodes = "UNAUTHORIZED"
+	ErrBadRequest   ErrorCodes = "BAD_REQUEST"
+	ErrNotFound     ErrorCodes = "NOT_FOUND"
+	ErrGeneric      ErrorCodes = "GENERIC_ERROR"
+	ErrUnauthorized ErrorCodes = "UNAUTHORIZED"
 )
 
 var (

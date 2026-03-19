@@ -12,9 +12,9 @@ import (
 )
 
 type BookHandler struct {
-	bu  _interface.BookUsecase
-	au _interface.AgentAdapter
-	du _interface.DomainUsecase
+	bu       _interface.BookUsecase
+	au       _interface.AgentAdapter
+	du       _interface.DomainUsecase
 	errorMgr errormodels.Errors
 }
 

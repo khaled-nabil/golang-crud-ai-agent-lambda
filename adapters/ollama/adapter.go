@@ -25,7 +25,7 @@ func NewOllama() (*OllamaAdapter, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create Ollama client %w", err)
 	}
-	
+
 	return &OllamaAdapter{
 		model,
 		client,
@@ -57,9 +57,9 @@ func (o *OllamaAdapter) EmbedSearchDocument(text string) ([]float32, error) {
 }
 
 func Float64To32(input []float64) []float32 {
-    output := make([]float32, len(input))
-    for i, v := range input {
-        output[i] = float32(v)
-    }
-    return output
+	output := make([]float32, len(input))
+	for i, v := range input {
+		output[i] = float32(v)
+	}
+	return output
 }
