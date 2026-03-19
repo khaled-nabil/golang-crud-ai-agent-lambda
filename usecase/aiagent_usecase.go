@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"ai-agent/interface"
+	_interface "ai-agent/interface"
 	"fmt"
 )
 

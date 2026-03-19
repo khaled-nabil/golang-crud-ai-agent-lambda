@@ -19,6 +19,8 @@ import (
 
 	"ai-agent/adapters/ollama"
 
+	"errors"
+
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -76,8 +78,7 @@ func main() {
 		log.Fatalf("DB_INSERTION_FILEPATH is not set")
 	}
 
-	switch insertionDomain {
-	case "book":
+	if insertionDomain != "book" {
 		createBooks(appConfig, filepath)
 	}
 }
@@ -91,12 +92,14 @@ func createBooks(cfg *secrets.AppConfig, filepath string) {
 
 	repository, err := db.NewPostgresRepo(cfg)
 	if err != nil {
-		log.Fatalf("Failed to initialize DB: %v", err)
+		log.Printf("Failed to initialize DB: %v", err)
+		return
 	}
 	bookRepo := db.NewBookRepository(repository)
-	ollamaClient, errr := ollama.NewOllama()
-	if errr != nil {
-		log.Fatalf("Failed to initialize Ollama: %v", errr)
+	ollamaClient, err := ollama.NewOllama()
+	if err != nil {
+		log.Printf("Failed to initialize Ollama: %v", err)
+		return
 	}
 
 	bookUsecase := usecase.NewBookUsecase(ollamaClient, bookRepo)
@@ -105,7 +108,8 @@ func createBooks(cfg *secrets.AppConfig, filepath string) {
 
 	_, err = csvr.Read()
 	if err != nil {
-		log.Fatalf("Failed to read CSV header: %v", err)
+		log.Printf("Failed to read CSV header: %v", err)
+		return
 	}
 
 	for {
@@ -114,27 +118,32 @@ func createBooks(cfg *secrets.AppConfig, filepath string) {
 
 		row, err := csvr.Read()
 		if err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				err = nil
 			}
-			log.Fatalf("Failed to Read CSV %s %v", filepath, err)
+			log.Printf("Failed to Read CSV %s %v", filepath, err)
+			return
 		}
 
-		y, err := strconv.Atoi(getValueOrDefault(row[8], "0"))
+		y, err := strconv.Atoi(getValueOrDefault(row[8], "2000"))
 		if err != nil {
-			log.Fatalf("Failed to convert year to int: %v", err)
+			log.Printf("Failed to convert year to int: %v", err)
+			return
 		}
-		ar, err := strconv.ParseFloat(getValueOrDefault(row[9], "0"), 32)
+		ar, err := strconv.ParseFloat(getValueOrDefault(row[9], "2.5"), 32)
 		if err != nil {
-			log.Fatalf("Failed to convert average rating to float: %v", err)
+			log.Printf("Failed to convert average rating to float: %v", err)
+			return
 		}
-		pc, err := strconv.Atoi(getValueOrDefault(row[10], "0"))
+		pc, err := strconv.Atoi(getValueOrDefault(row[10], "1"))
 		if err != nil {
-			log.Fatalf("Failed to convert page count to int: %v", err)
+			log.Printf("Failed to convert page count to int: %v", err)
+			return
 		}
 		rc, err := strconv.Atoi(getValueOrDefault(row[11], "0"))
 		if err != nil {
-			log.Fatalf("Failed to convert rating count to int: %v", err)
+			log.Printf("Failed to convert rating count to int: %v", err)
+			return
 		}
 
 		a := strings.SplitSeq(row[4], ";")
@@ -158,8 +167,8 @@ func createBooks(cfg *secrets.AppConfig, filepath string) {
 			Description:   row[7],
 			Year:          int16(y),
 			AverageRating: float32(ar),
-			PageCount:     int(pc),
-			RatingCount:   int(rc),
+			PageCount:     pc,
+			RatingCount:   rc,
 			Authors:       authors,
 			Categories:    categories,
 		}

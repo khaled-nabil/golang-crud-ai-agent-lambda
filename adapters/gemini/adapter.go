@@ -271,5 +271,10 @@ func transformHistoryToGeminiContent(h []entity.ChatHistoryEntity) []*genai.Cont
 }
 
 func transformBookToPrompt(b *entity.BookEntity) string {
-	return fmt.Sprintf("--- BOOK ID: %d ---\nTitle: %s\nAuthor: %s\nGenre: %s\nSummary: %s\n\n", *b.ID, b.Title, b.GetAuthorNames(), b.GetCategoryNames(), b.Description)
+	bookID := ""
+	if b.ID != nil {
+		bookID = b.ID.String()
+	}
+
+	return fmt.Sprintf("--- BOOK ID: %s ---\nTitle: %s\nAuthor: %s\nGenre: %s\nSummary: %s\n\n", bookID, b.Title, b.GetAuthorNames(), b.GetCategoryNames(), b.Description)
 }

@@ -2,11 +2,12 @@ package handler
 
 import (
 	"ai-agent/handler/handler_dto"
-	"ai-agent/interface"
+	_interface "ai-agent/interface"
 	"log"
 	"net/http"
 
 	"ai-agent/entity/errormodels"
+
 	"github.com/gin-gonic/gin"
 )
 

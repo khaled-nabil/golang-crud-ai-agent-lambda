@@ -2,13 +2,7 @@ all: true
 recursive: true
 
 packages:
-  ai-agent/model/datamodels:
-    config:
-      all: true
-      dir: "{{.InterfaceDir}}/mocks"
-      filename: "mocks_{{.InterfaceName}}.go"
-      structname: "{{.Mock}}{{.InterfaceName}}"
-  ai-agent/model/servicemodels:
+  ai-agent/interface:
     config:
       all: true
       dir: "{{.InterfaceDir}}/mocks"

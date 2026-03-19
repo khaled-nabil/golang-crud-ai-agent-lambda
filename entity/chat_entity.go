@@ -6,4 +6,3 @@ type (
 		Response  string `json:"response"`
 	}
 )
-
